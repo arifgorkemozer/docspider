@@ -1,0 +1,11 @@
+# folders
+apikeys/
+docspider_ground_truth_dataset/
+spider/
+spider_mongodb_sqlite_comparison/
+.venv/
+
+# files
+.DS_Store
+*.pyc
+spider_table_column_metadata.json
