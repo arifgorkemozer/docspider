@@ -1,5 +1,5 @@
-# python3 nl2query_base_pipeline.py <root_path> <experiment_tag> <experiment_type> <dataset_type>
-# python3 nl2query_base_pipeline.py .. <tag> nl2mongo dev
+# python3 nl2query_test_pipeline.py <root_path> <experiment_tag> <experiment_type> <dataset_type>
+# python3 nl2query_test_pipeline.py .. <tag> nl2mongo dev
 # add --include_goldsql for adding gold sql to the prompts
 # add --skip_llm_step for skipping nosql query generation wit llm
 # add --skip_execution_step for skipping running sql and nosql queries
@@ -20,7 +20,7 @@ from step5_compare_results import compare_expected_predicted_query_results
 parser = argparse.ArgumentParser()
 parser.add_argument("root_path", help="Root path for reference")
 parser.add_argument("experiment_tag", help="Tag for the experiment")
-parser.add_argument("experiment_type", choices=[EXPERIMENT_NL2SQL, EXPERIMENT_NL2MONGO], help="Task type, from NL to SQL/Mongo")
+parser.add_argument("experiment_type", choices=[EXPERIMENT_NL2SQL, EXPERIMENT_NL2MONGO], default=EXPERIMENT_NL2MONGO, help="Task type, from NL to SQL/Mongo")
 parser.add_argument("dataset_type", choices=["train", "dev"], help="Use spider train or dev set")
 parser.add_argument("--include_goldsql", action="store_true", help="Include gold SQL to prompt or not")
 parser.add_argument("--skip_llm_step", action="store_true", help="Skip generating queries with LLM or not")
