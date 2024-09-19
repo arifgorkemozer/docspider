@@ -18,3 +18,16 @@ tqdm==4.66.5
 tzdata==2024.1
 urllib3==2.2.2
 yarl==1.10.0
+transformers==4.44.2
+torch==2.1.2 --index-url https://download.pytorch.org/whl/cu121
+tqdm
+wandb==0.15.12
+numpy==1.26.0
+pandas
+scikit-learn==1.5.1
+accelerate==0.33.0
+evaluate==0.4.1
+trl==0.9.6
+peft==0.12.0
+bitsandbytes==0.43.3
+openai==0.28.0
