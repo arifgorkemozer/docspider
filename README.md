@@ -10,10 +10,10 @@ Among the files, you can find the scripts developed to test LLM-generated MQLs a
 
 ## Requirements for scripts
 
-#### 1) Python requirements
-
-openai\==0.28.0
-pandas\==2.2.2
+## Install Packages
+```
+pip install -r requirements.txt
+```
 
 #### 2) Spider dataset folder
 
@@ -58,3 +58,19 @@ python3 nl2query_base_pipeline.py <root_path> <experiment_tag> <experiment_type>
 - Put "predicted_nosql.tsv" inside "my_experiments/spider_mongodb_sqlite_comparison/mymodel_experiment"
 - Example run should be: 
 **python3 nl2query_base_pipeline.py ../my_experiments mymodel_experiment nl2mongo dev --skip-llm-step**
+
+
+## Fine-tuning LLMs for text-to-NoSQL
+
+You can fine-tune an LLM on text-to-NoSQL using the DocSpider dataset as follows. Note that you need a Wandb account to monitor training logs.
+
+```
+python finetune_text2nosql.py \
+--model_id "mistralai/Mistral-7B-Instruct-v0.2" # or "deepseek-ai/deepseek-coder-33b-instruct"
+--batch 8 \
+--llama_prompt True \
+--skip_train False \
+--lr 2e-5 \
+--epoch 3 \
+--cache_dir None \
+```
