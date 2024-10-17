@@ -1,8 +1,8 @@
 # folders
 apikeys/
 spider/*
-spider_mongodb_sqlite_comparison/*
-!spider_mongodb_sqlite_comparison/.gitkeep
+experiments/*
+!experiments/.gitkeep
 .venv/
 
 # files

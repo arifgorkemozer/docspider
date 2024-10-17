@@ -1,5 +1,4 @@
-# python3 nl2query_base_pipeline.py .. <tag> nl2mongo dev
-# add --include_goldsql for adding gold sql to the prompts
+# python3 nl2query_test_pipeline.py <experiment_tag>
 # add --skip_llm_step for skipping nosql query generation wit llm
 # add --skip_execution_step for skipping running sql and nosql queries
 
@@ -17,34 +16,27 @@ from step4_run_queries import run_predicted_queries
 from step5_compare_results import compare_expected_predicted_query_results
 
 parser = argparse.ArgumentParser()
-parser.add_argument("root_path", help="Root path for reference")
 parser.add_argument("experiment_tag", help="Tag for the experiment")
-parser.add_argument("experiment_type", choices=[EXPERIMENT_NL2SQL, EXPERIMENT_NL2MONGO], help="Task type, from NL to SQL/Mongo")
-parser.add_argument("dataset_type", choices=["train", "dev"], help="Use spider train or dev set")
-parser.add_argument("--include_goldsql", action="store_true", help="Include gold SQL to prompt or not")
 parser.add_argument("--skip_llm_step", action="store_true", help="Skip generating queries with LLM or not")
 parser.add_argument("--skip_execution_step", action="store_true", help="Skip running generated queries or not")
-parser.add_argument("--patch_file_path", help="Name of the patch file that has the corrected MongoDB queries. Must be under ./spider_mongodb_sqlite_comparison/<experiment_tag>/")
 args = parser.parse_args()
 
 # generic definitions
-DATASET_JSON_FILENAME = "train_spider.json" if args.dataset_type == "train" else "dev.json"
-GOLD_SQL_FILENAME = "train_gold.sql" if args.dataset_type == "train" else "dev_gold.sql"
-INCLUDE_GOLD = args.include_goldsql
+DATASET_JSON_FILENAME = "dev.json"
+GOLD_SQL_FILENAME = "dev_gold.sql"
 SKIP_LLM_GENERATION = args.skip_llm_step
 SKIP_QUERY_EXECUTION = args.skip_execution_step
 
 # generic paths
-ROOT_PATH = args.root_path[0:-1] if args.root_path.endswith("/") else args.root_path
+ROOT_PATH = ".." # parent directory
 TABLES_JSON_PATH = f"{ROOT_PATH}/spider/tables.json"
 METADATA_OUTPUT_PATH = f"{ROOT_PATH}/spider_table_column_metadata.json"
 NL_SOURCE_JSON_PATH = f"{ROOT_PATH}/spider/{DATASET_JSON_FILENAME}"
-ALL_EXPERIMENTS_ROOT_PATH = f"{ROOT_PATH}/spider_mongodb_sqlite_comparison"
-GROUND_TRUTH_FILEPATH = f"{ROOT_PATH}/docspider_ground_truth_dataset/docspider_ground_truth_{args.dataset_type}.csv"
+ALL_EXPERIMENTS_ROOT_PATH = f"{ROOT_PATH}/experiments"
+GROUND_TRUTH_FILEPATH = f"{ROOT_PATH}/docspider_ground_truth_dataset/docspider_ground_truth_dev.csv"
 
 # experiment specific paths
 EXPERIMENT_TAG = args.experiment_tag
-EXPERIMENT_TYPE = args.experiment_type
 EXPERIMENT_PATH = f"{ALL_EXPERIMENTS_ROOT_PATH}/{EXPERIMENT_TAG}"
 PROMPT_OUTPUT_FILENAME = "prompts.csv"
 PREDICTIONS_OUTPUT_FILENAME = "predicted_nosql.tsv"
@@ -54,20 +46,6 @@ EXPECTED_QUERY_RESULTS_FOLDERNAME = "expected_results"
 ACHIEVED_QUERY_RESULTS_FOLDERNAME = "achieved_results"
 EXPECTED_QUERY_RESULTS_PATH = f"{EXPERIMENT_PATH}/{EXPECTED_QUERY_RESULTS_FOLDERNAME}"
 ACHIEVED_QUERY_RESULTS_PATH = f"{EXPERIMENT_PATH}/{ACHIEVED_QUERY_RESULTS_FOLDERNAME}"
-PREDICTIONS_PATCH_PATH = args.patch_file_path
-
-# read patched queries
-PATCH_MODE = PREDICTIONS_PATCH_PATH is not None
-patched_query_map = {}
-
-if PATCH_MODE:
-    patch_file = pandas.read_csv(PREDICTIONS_PATCH_PATH, sep=TAB_CHAR)
-
-    for i, row in patch_file.iterrows():
-        query_index = row["query_id"]
-        patched_query = row["corrected_nosql"]
-        
-        patched_query_map[query_index] = patched_query
 
 # read query hardness
 hardness_map = {}
@@ -116,13 +94,6 @@ for i, row in gold_sql_file.iterrows():
     db = row["db"]
     gold_sql_map[query_index] = (query, db)
 
-# on patch mode, run patches and compare results only
-if PATCH_MODE:
-    run_patched_queries(
-        patched_predictions_output_path=PREDICTIONS_PATCH_PATH,
-        expected_query_results_path=EXPECTED_QUERY_RESULTS_PATH,
-    )
-
 # on standard mode, generate metadata, prompts, queries; run them and compare results
 else:
     # STEP 1 - GENERATE TABLE COLUMN METADATA
@@ -139,28 +110,22 @@ else:
         nl_source_json_path=NL_SOURCE_JSON_PATH,
         output_filename=PROMPT_OUTPUT_PATH,
         ground_truth_path=GROUND_TRUTH_FILEPATH,
-        include_gold=INCLUDE_GOLD
+        include_gold=False
     )
     prompt_file = pandas.read_csv(PROMPT_OUTPUT_PATH, sep=SEMICOLON_CHAR)
 
     # STEP 3 - GENERATE DB QUERIES WITH LLM
-    # gpt_model_name="gpt-4-1106-preview",
-    # gpt_model_name="gpt-3.5-turbo-0613",
-    # gpt_model_name="ft:gpt-3.5-turbo-0613:personal::8nwiLepO",
-    # gpt_model_name="gpt-4o-2024-08-06",
-    # gpt_model_name="ft:gpt-4o-2024-08-06:personal::A19WGCNH",
     if not SKIP_LLM_GENERATION:
         generate_db_queries_with_llm(
-            gpt_model_name="ft:gpt-4o-2024-08-06:personal::A19WGCNH",
+            gpt_model_name="gpt-3.5-turbo-0613",
             prompt_output_path=PROMPT_OUTPUT_PATH,
             predictions_output_path=PREDICTIONS_OUTPUT_PATH,
-            # start_from_query_id=404,
         )
 
     # STEP 4 - RUN GOLD SQLS AND LLM-GENERATED QUERIES
     if not SKIP_QUERY_EXECUTION:
         run_predicted_queries(
-            experiment_type=EXPERIMENT_TYPE,
+            experiment_type=EXPERIMENT_NL2MONGO,
             predictions_output_path=PREDICTIONS_OUTPUT_PATH,
             expected_query_results_path=EXPECTED_QUERY_RESULTS_PATH,
             achieved_query_results_path=ACHIEVED_QUERY_RESULTS_PATH,
@@ -173,13 +138,11 @@ for sensitivity in SENSITIVITY_OPTIONS:
     compare_expected_predicted_query_results(
         current_sensitivity=sensitivity,
         experiment_tag=EXPERIMENT_TAG,
-        experiment_type=EXPERIMENT_TYPE,
+        experiment_type=EXPERIMENT_NL2MONGO,
         experiment_path=EXPERIMENT_PATH,
         predictions_output_path=PREDICTIONS_OUTPUT_PATH,
         expected_query_results_path=EXPECTED_QUERY_RESULTS_PATH,
         achieved_query_results_path=ACHIEVED_QUERY_RESULTS_PATH,
         gold_sql_map=gold_sql_map,
         hardness_map=hardness_map,
-        patched_query_map=patched_query_map,
-        run_patched_queries=PATCH_MODE,
     )
