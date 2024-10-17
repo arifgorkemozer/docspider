@@ -45,6 +45,7 @@ You should see a directory named *docspider_ground_truth_dataset* that contains:
 - Run the following command with an experiment tag of your choice:
 
 ```
+cd pipelines
 python3 nl2query_test_pipeline.py <experiment_tag>
 ```
 
