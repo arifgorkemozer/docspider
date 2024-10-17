@@ -1,8 +1,14 @@
 # folders
 apikeys/
-docspider_ground_truth_dataset/
-spider/
-spider_mongodb_sqlite_comparison/
+spider/database
+spider/dev_gold.sql
+spider/dev.json
+spider/README.txt
+spider/tables.json
+spider/train_gold.sql
+spider/train_others.json
+spider/train_spider.json
+spider_mongodb_sqlite_comparison/*
 .venv/
 
 # files
