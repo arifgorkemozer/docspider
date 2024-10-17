@@ -9,6 +9,7 @@ spider/train_gold.sql
 spider/train_others.json
 spider/train_spider.json
 spider_mongodb_sqlite_comparison/*
+!spider_mongodb_sqlite_comparison/.gitkeep
 .venv/
 
 # files
