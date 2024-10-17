@@ -29,7 +29,7 @@ args = parser.parse_args()
 
 # generic definitions
 DATASET_JSON_FILENAME = "train_spider.json" if args.dataset_type == "train" else "dev.json"
-GOLD_SQL_FILENAME = "custom_train_gold.sql" if args.dataset_type == "train" else "custom_dev_gold.sql"
+GOLD_SQL_FILENAME = "train_gold.sql" if args.dataset_type == "train" else "dev_gold.sql"
 INCLUDE_GOLD = args.include_goldsql
 SKIP_LLM_GENERATION = args.skip_llm_step
 SKIP_QUERY_EXECUTION = args.skip_execution_step
@@ -40,8 +40,6 @@ TABLES_JSON_PATH = f"{ROOT_PATH}/spider/tables.json"
 METADATA_OUTPUT_PATH = f"{ROOT_PATH}/spider_table_column_metadata.json"
 NL_SOURCE_JSON_PATH = f"{ROOT_PATH}/spider/{DATASET_JSON_FILENAME}"
 ALL_EXPERIMENTS_ROOT_PATH = f"{ROOT_PATH}/spider_mongodb_sqlite_comparison"
-GOLD_SQL_FILEPATH = f"{ROOT_PATH}/spider/{GOLD_SQL_FILENAME}"
-HARDNESS_FILEPATH = f"{ROOT_PATH}/prompts_ground_truth_generation/hardness_{args.dataset_type}.csv"
 GROUND_TRUTH_FILEPATH = f"{ROOT_PATH}/docspider_ground_truth_dataset/docspider_ground_truth_{args.dataset_type}.csv"
 
 # experiment specific paths
@@ -73,9 +71,9 @@ if PATCH_MODE:
 
 # read query hardness
 hardness_map = {}
-prompt_with_hardness_file = pandas.read_csv(HARDNESS_FILEPATH, sep=SEMICOLON_CHAR)
+gt_file = pandas.read_csv(GROUND_TRUTH_FILEPATH, sep=SEMICOLON_CHAR)
 
-for i, row in prompt_with_hardness_file.iterrows():
+for i, row in gt_file.iterrows():
     hardness_map[i+1] = row["hardness"]
 
 ######################### BEGIN - CREATE FILES AND FOLDERS NEEDED #########################
@@ -97,7 +95,16 @@ if ACHIEVED_QUERY_RESULTS_FOLDERNAME not in items_under_experiment:
 
 # copy gold sql file if needed
 if GOLD_SQL_FILENAME not in items_under_experiment:
-    shutil.copy(GOLD_SQL_FILEPATH, EXPERIMENT_PATH)
+    gold_sql_filepath = f"{ROOT_PATH}/spider/{GOLD_SQL_FILENAME}"
+    shutil.copy(gold_sql_filepath, EXPERIMENT_PATH)
+
+    with open(f"{EXPERIMENT_PATH}/{GOLD_SQL_FILENAME}", 'r') as file:
+        original_contents = file.read()
+    
+    new_contents = "query\tdb\n" + original_contents
+
+    with open(f"{EXPERIMENT_PATH}/{GOLD_SQL_FILENAME}", 'w') as file:
+        file.write(new_contents)
 
 # read gold sqls
 gold_sql_file = pandas.read_csv(f"{EXPERIMENT_PATH}/{GOLD_SQL_FILENAME}", sep=TAB_CHAR)

@@ -1,13 +1,6 @@
 # folders
 apikeys/
-spider/database
-spider/dev_gold.sql
-spider/dev.json
-spider/README.txt
-spider/tables.json
-spider/train_gold.sql
-spider/train_others.json
-spider/train_spider.json
+spider/*
 spider_mongodb_sqlite_comparison/*
 !spider_mongodb_sqlite_comparison/.gitkeep
 .venv/
