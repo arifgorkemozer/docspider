@@ -43,7 +43,7 @@ def find_all_keywords_in_mongo_result(mongodb_result_str):
     return list(keywords)
 
 
-def compare_expected_predicted_query_results(current_sensitivity, experiment_tag, experiment_type, experiment_path, predictions_output_path, achieved_query_results_path, expected_query_results_path, gold_sql_map, hardness_map, patched_query_map={}, run_patched_queries=False):
+def compare_expected_predicted_query_results(current_sensitivity, experiment_tag, experiment_type, experiment_path, predictions_output_path, achieved_query_results_path, expected_query_results_path, gold_sql_map, hardness_map):
     result_filenames = sorted(os.listdir(achieved_query_results_path))
 
     total = 0
@@ -67,17 +67,15 @@ def compare_expected_predicted_query_results(current_sensitivity, experiment_tag
         },
     }
 
-    for result_filename in result_filenames:
-        if result_filename.startswith("result"):
-            # if the result has a patched version under the same folder, skip it
-            if run_patched_queries and "patched_" + result_filename in result_filenames:
-                continue
+    def get_accuracy_str_and_percentage(hardness):
+        if accurates_by_hardness[hardness]["total"] == 0:
+            return "0/0", 0
 
-            query_id = int(result_filename.replace("result", EMPTY_STR).replace(".txt", EMPTY_STR))
         else:
-            # print(f"Using patch: {result_filename}")
-            query_id = int(result_filename.replace("patched_result", EMPTY_STR).replace(".txt", EMPTY_STR))
+            return f'{accurates_by_hardness[hardness]["correct"]}/{accurates_by_hardness[hardness]["total"]}', accurates_by_hardness[hardness]["correct"] / accurates_by_hardness[hardness]["total"]
 
+    for result_filename in result_filenames:
+        query_id = int(result_filename.replace("result", EMPTY_STR).replace(".txt", EMPTY_STR))
         hardness = hardness_map[query_id]
 
         if hardness in accurates_by_hardness.keys():
@@ -157,11 +155,6 @@ def compare_expected_predicted_query_results(current_sensitivity, experiment_tag
                         mongodb_original_result_object = [line.strip() for line in achieved_query_result_file.readlines() if line.strip() != ""]
                         achieved_result_object = [(original_result_row,) for original_result_row in mongodb_original_result_object]
 
-                # print(query_id)
-                # print("Expected", expected_result_object)
-                # print("Received", achieved_result_object)
-                # print("----")
-                
                 try:
                     both_results_are_equal = True
                     expected_result_rowcount = len(expected_result_object)
@@ -229,29 +222,30 @@ def compare_expected_predicted_query_results(current_sensitivity, experiment_tag
                             accurates.append(query_id)
                             accurates_by_hardness[hardness]["correct"] += 1
                 except Exception as ex:
-                    # print(query_id, ex)
                     pass
 
     # print accuracies on terminal
+    easy_acc = get_accuracy_str_and_percentage("easy")
+    medium_acc = get_accuracy_str_and_percentage("medium")
+    hard_acc = get_accuracy_str_and_percentage("hard")
+    extra_acc = get_accuracy_str_and_percentage("extra")
+
     print(experiment_tag, "-", current_sensitivity)
     print("Accuracy:", 100.0 * len(accurates) / total)
-    print("Easy:", f'{accurates_by_hardness["easy"]["correct"]}/{accurates_by_hardness["easy"]["total"]}', "Accuracy:", 100.0 * accurates_by_hardness["easy"]["correct"] / accurates_by_hardness["easy"]["total"])
-    print("Medium:", f'{accurates_by_hardness["medium"]["correct"]}/{accurates_by_hardness["medium"]["total"]}', "Accuracy:", 100.0 * accurates_by_hardness["medium"]["correct"] / accurates_by_hardness["medium"]["total"])
-    print("Hard:", f'{accurates_by_hardness["hard"]["correct"]}/{accurates_by_hardness["hard"]["total"]}', "Accuracy:", 100.0 * accurates_by_hardness["hard"]["correct"] / accurates_by_hardness["hard"]["total"])
-    print("Extra:", f'{accurates_by_hardness["extra"]["correct"]}/{accurates_by_hardness["extra"]["total"]}', "Accuracy:", 100.0 * accurates_by_hardness["extra"]["correct"] / accurates_by_hardness["extra"]["total"])
+    print("Easy:", easy_acc[0], "Accuracy:", 100.0 * easy_acc[1])
+    print("Medium:", medium_acc[0], "Accuracy:", 100.0 * medium_acc[1])
+    print("Hard:", hard_acc[0], "Accuracy:", 100.0 * hard_acc[1])
+    print("Extra:", extra_acc[0], "Accuracy:", 100.0 * extra_acc[1])
     print("-------")
 
-    ground_truth_file = open(f"{experiment_path}/ground-truth-{current_sensitivity}{'-patched' if run_patched_queries else ''}.tsv", "w")
+    ground_truth_file = open(f"{experiment_path}/ground-truth-{current_sensitivity}.tsv", "w")
     predictions_file = pandas.read_csv(predictions_output_path, sep=TAB_CHAR)
     predictions = {}
 
     for i, row in predictions_file.iterrows():
         query_id = row["query_id"]
         pred_nosql = row["pred_nosql"]
-        if run_patched_queries and query_id in patched_query_map:
-            predictions[query_id] = patched_query_map[query_id]
-        else:
-            predictions[query_id] = pred_nosql
+        predictions[query_id] = pred_nosql
 
     accurates = sorted(accurates)
 

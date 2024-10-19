@@ -1,4 +1,4 @@
-# python3 nl2query_test_pipeline.py <experiment_tag>
+# python3 nl2query_test_pipeline.py <experiment_tag> <experiment_type> <dataset_type>
 # add --skip_llm_step for skipping nosql query generation wit llm
 # add --skip_execution_step for skipping running sql and nosql queries
 
@@ -17,13 +17,16 @@ from step5_compare_results import compare_expected_predicted_query_results
 
 parser = argparse.ArgumentParser()
 parser.add_argument("experiment_tag", help="Tag for the experiment")
+parser.add_argument("dataset_type", choices=["train", "dev"], help="Use spider train or dev set")
 parser.add_argument("--skip_llm_step", action="store_true", help="Skip generating queries with LLM or not")
 parser.add_argument("--skip_execution_step", action="store_true", help="Skip running generated queries or not")
 args = parser.parse_args()
 
 # generic definitions
-DATASET_JSON_FILENAME = "dev.json"
-GOLD_SQL_FILENAME = "dev_gold.sql"
+USE_TRAINING_DATASET = args.dataset_type == "train"
+USE_TEST_DATASET = not USE_TRAINING_DATASET
+DATASET_JSON_FILENAME = "train_spider.json" if USE_TRAINING_DATASET else "dev.json"
+GOLD_SQL_FILENAME = "train_gold.sql" if USE_TRAINING_DATASET else "dev_gold.sql"
 SKIP_LLM_GENERATION = args.skip_llm_step
 SKIP_QUERY_EXECUTION = args.skip_execution_step
 
@@ -33,7 +36,6 @@ TABLES_JSON_PATH = f"{ROOT_PATH}/spider/tables.json"
 METADATA_OUTPUT_PATH = f"{ROOT_PATH}/spider_table_column_metadata.json"
 NL_SOURCE_JSON_PATH = f"{ROOT_PATH}/spider/{DATASET_JSON_FILENAME}"
 ALL_EXPERIMENTS_ROOT_PATH = f"{ROOT_PATH}/experiments"
-GROUND_TRUTH_FILEPATH = f"{ROOT_PATH}/docspider_ground_truth_dataset/docspider_ground_truth_dev.csv"
 
 # experiment specific paths
 EXPERIMENT_TAG = args.experiment_tag
@@ -46,7 +48,7 @@ EXPECTED_QUERY_RESULTS_FOLDERNAME = "expected_results"
 ACHIEVED_QUERY_RESULTS_FOLDERNAME = "achieved_results"
 EXPECTED_QUERY_RESULTS_PATH = f"{EXPERIMENT_PATH}/{EXPECTED_QUERY_RESULTS_FOLDERNAME}"
 ACHIEVED_QUERY_RESULTS_PATH = f"{EXPERIMENT_PATH}/{ACHIEVED_QUERY_RESULTS_FOLDERNAME}"
-HARDNESS_FILEPATH = f"{ROOT_PATH}/docspider_ground_truth_dataset/hardness_dev.csv"
+HARDNESS_FILEPATH = f"{ROOT_PATH}/docspider_ground_truth_dataset/hardness_{args.dataset_type}.csv"
 
 # read query hardness
 hardness_map = {}
@@ -110,8 +112,8 @@ else:
         table_column_metadata=metadata,
         nl_source_json_path=NL_SOURCE_JSON_PATH,
         output_filename=PROMPT_OUTPUT_PATH,
-        ground_truth_path=GROUND_TRUTH_FILEPATH,
-        include_gold=False
+        ground_truth_path=None,
+        include_gold=True
     )
     prompt_file = pandas.read_csv(PROMPT_OUTPUT_PATH, sep=SEMICOLON_CHAR)
 
