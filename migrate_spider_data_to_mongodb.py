@@ -9,7 +9,6 @@ parser.add_argument("database_folder_path", help="Path to database folder that c
 args = parser.parse_args()
 
 DATABASE_FOLDER_PATH = args.database_folder_path
-MONGO_COLLECTION_PREFIX = "spider_"
 
 mongo_client = MongoClient(host="localhost", port=27017)
 databases = sorted(os.listdir(DATABASE_FOLDER_PATH))
@@ -22,7 +21,7 @@ for db_index, db_name in enumerate(databases):
         continue
     
     db_path = f"{DATABASE_FOLDER_PATH}/{db_name}"
-    mongo_database_name = f"{MONGO_COLLECTION_PREFIX}{db_name}"
+    mongo_database_name = db_name
     files = sorted(os.listdir(db_path))
     sqlite_filename = None
 

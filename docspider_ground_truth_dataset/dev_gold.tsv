@@ -1,0 +1,621 @@
+query	db
+db.singer.find({}, { Name: 1, Country: 1, Age: 1 }).sort({ Age: -1 })	concert_singer
+db.singer.find({}, { Name: 1, Country: 1, Age: 1 }).sort({ Age: -1 })	concert_singer
+db.singer.aggregate([ { $match: { Country: 'France' } }, { $group: { _id: null, avgAge: { $avg: "$Age" }, minAge: { $min: "$Age" }, maxAge: { $max: "$Age" } }}, { $project: { avg: "$avgAge", min: "$minAge", max: "$maxAge" } }])	concert_singer
+db.singer.aggregate([ { $match: { Country: 'France' } }, { $group: { _id: null, avgAge: { $avg: "$Age" }, minAge: { $min: "$Age" }, maxAge: { $max: "$Age" } }}, { $project: { avg: "$avgAge", min: "$minAge", max: "$maxAge" } }])	concert_singer
+db.singer.find({}, {Song_Name: 1, Song_release_year: 1}).sort({Age: 1}).limit(1)	concert_singer
+db.singer.find({}, { Song_Name: 1, Song_release_year: 1 }).sort({ Age: 1 }).limit(1)	concert_singer
+db.singer.aggregate([ { $group: { _id: "$Country", count: { $sum: 1 } } }, { $project: { country: "$_id", count: 1 } }])	concert_singer
+db.singer.aggregate([ { $group: { _id: "$Country", count: { $sum: 1 } } }])	concert_singer
+db.singer.aggregate([ { $group: { _id: null, averageAge: { $avg: "$Age" } } }, { $lookup: { from: "singer", let: { avgAge: "$averageAge" }, pipeline: [ { $match: { $expr: { $gt: [ "$Age", "$$avgAge" ] } } }, { $project: { Song_Name: 1 } } ], as: "songNames" } }, { $unwind: "$songNames" }, { $replaceRoot: { newRoot: "$songNames" } }])	concert_singer
+db.singer.aggregate([ { $group: { _id: null, averageAge: { $avg: "$Age" } } }, { $lookup: { from: "singer", let: { averageAge: "$averageAge" }, pipeline: [ { $match: { $expr: { $gt: [ "$Age", "$$averageAge" ] } } }, { $project: { Song_Name: 1 } } ], as: "olderSingers" } }, { $unwind: "$olderSingers" }, { $replaceRoot: { newRoot: "$olderSingers" } }])	concert_singer
+db.stadium.aggregate([ { $group: { _id: null, averageCapacity: { $avg: "$Capacity" }, maxCapacity: { $max: "$Capacity" } } }, { $project: { avg: "$averageCapacity", max: "$maxCapacity" } }])	concert_singer
+db.stadium.aggregate([ { $sort: { Average: -1 } }, { $limit: 1 }, { $project: { Name: 1, Capacity: 1 } }])	concert_singer
+db.stadium.find({}, { Name: 1, Capacity: 1 }).sort({ Average: -1 }).limit(1)	concert_singer
+db.concert.aggregate([ { $group: { _id: "$Year", numConcerts: { $sum: 1 } } }, { $sort: { numConcerts: -1 } }, { $limit: 1 }, { $project: { _id: 1 } } ])	concert_singer
+db.concert.aggregate([ { $group: { _id: "$Year", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Year: "$_id" } }])	concert_singer
+db.singer.aggregate([ { $group: { _id: "$Country", above_40: { $sum: { $cond: [{ $gt: ["$Age", 40] }, 1, 0] } }, below_30: { $sum: { $cond: [{ $lt: ["$Age", 30] }, 1, 0] } } } }, { $match: { $and: [ { above_40: { $gt: 0 } }, { below_30: { $gt: 0 } } ] } }, { $project: { Country: "$_id" } } ])	concert_singer
+db.concert.aggregate([ { $lookup: { from: "singer_in_concert", localField: "concert_ID", foreignField: "concert_ID", as: "singers" } }, { $project: { concert_Name: 1, Theme: 1, numSingers: { $size: "$singers" } } } ])	concert_singer
+db.concert.aggregate([ { $lookup: { from: "singer_in_concert", localField: "concert_ID", foreignField: "concert_ID", as: "singer_count" } }, { $project: { concert_Name: 1, Theme: 1, number_of_singers: { $size: "$singer_count" } } } ])	concert_singer
+db.singer.find( { "Song_Name": { "$regex": "Hey", "$options": "i" } }, { "Name": 1, "Country": 1, "_id": 0 } )	concert_singer
+db.singer.find( { Song_Name: /Hey/ }, { Name: 1, Country: 1 } )	concert_singer
+db.Pets.aggregate([ { $group: { _id: "$PetType", maxWeight: { $max: "$weight" } } }, { $project: { petType: "$_id", maxWeight: 1 } } ])	pets_1
+db.Pets.aggregate([ { $group: { _id: "$PetType", maxWeight: { $max: "$weight" } } }, { $project: { PetType: "$_id", maxWeight: 1 } } ])	pets_1
+db.Student.aggregate([ { $match: { Sex: 'F' } }, { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "StudentPets" } }, { $unwind: "$StudentPets" }, { $lookup: { from: "Pets", localField: "StudentPets.PetID", foreignField: "PetID", as: "StudentPetsDetails" } }, { $match: { "StudentPetsDetails.PetType": 'dog' } }, { $count: "NumberOfDogPets" } ])	pets_1
+db.Student.aggregate([ { $match: { Sex: 'F' } }, { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "PetInfo" } }, { $unwind: "$PetInfo" }, { $lookup: { from: "Pets", localField: "PetInfo.PetID", foreignField: "PetID", as: "PetDetails" } }, { $unwind: "$PetDetails" }, { $match: { "PetDetails.PetType": "dog" } }, { $count: "NumberOfDogs" } ])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "pets_info" } }, { $unwind: "$pets_info" }, { $lookup: { from: "Pets", localField: "pets_info.PetID", foreignField: "PetID", as: "pet_details" } }, { $unwind: "$pet_details" }, { $match: { $or: [ { "pet_details.PetType": "cat" }, { "pet_details.PetType": "dog" } ] } }, { $group: { _id: "$Fname" } }, { $project: { Fname: "$_id" } } ])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "student_pets" } }, { $unwind: "$student_pets" }, { $lookup: { from: "Pets", localField: "student_pets.PetID", foreignField: "PetID", as: "pet_details" } }, { $unwind: "$pet_details" }, { $match: { $or: [ { "pet_details.PetType": "cat" }, { "pet_details.PetType": "dog" } ] } }, { $group: { _id: "$Fname" } }, { $project: { Fname: "$_id" } } ])	pets_1
+db.Pets.find({}, { PetType: 1, weight: 1}).sort({pet_age: 1}).limit(1)	pets_1
+db.Pets.find({}, { PetType: 1, weight: 1}).sort({pet_age: 1}).limit(1)	pets_1
+db.Pets.find({ pet_age: { $gt: 1 } }, { PetID: 1, weight: 1 })	pets_1
+db.Pets.find({ pet_age: { $gt: 1 } }, { PetID: 1, weight: 1 })	pets_1
+db.Pets.aggregate([ { $group: { _id: "$PetType", averageAge: { $avg: "$pet_age" }, maximumAge: { $max: "$pet_age" } } } ])	pets_1
+db.Pets.aggregate([ { $group: { _id: "$PetType", average_age: { $avg: "$pet_age" }, maximum_age: { $max: "$pet_age" } } } ])	pets_1
+db.Pets.aggregate([ { $lookup: { from: "Has_Pet", localField: "PetID", foreignField: "PetID", as: "pet_info" } }, { $unwind: "$pet_info" }, { $group: { _id: "$PetType", averageWeight: { $avg: "$weight" } } }, { $project: { pettype: "$_id", averageWeight: 1 } }])	pets_1
+db.Pets.aggregate([ { $lookup: { from: "Has_Pet", localField: "PetID", foreignField: "PetID", as: "pet_info" } }, { $unwind: "$pet_info" }, { $group: { _id: "$PetType", averageWeight: { $avg: "$weight" } } }])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "PetOwners" } }, { $match: { PetOwners: { $ne: [] } } }, { $project: { Fname: 1, Age: 1 } } ])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "PetOwners" } }, { $match: { PetOwners: { $ne: [] } } }, { $project: { Fname: 1, Age: 1 } }, { $group: { _id: { Fname: "$Fname", Age: "$Age" } } }, { $project: { Fname: "$_id.Fname", Age: "$_id.Age" } } ])	pets_1
+db.Student.aggregate([ { $match: { LName: "Smith" } }, { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "pet_info" } }, { $unwind: "$pet_info" }, { $project: { petid: "$pet_info.PetID" } }])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "Pets" } }, { $match: { "Pets.0": { $exists: true } } }, { $project: { StuID: 1, NumberOfPets: { $size: "$Pets" } } } ])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "StudentPets" }}, { $unwind: "$StudentPets" }, { $group: { _id: "$StuID", NumberOfPets: { $sum: 1 } }}, { $project: { StuID: "$_id", NumberOfPets: 1 }} ])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "PetsDetails" } }, { $match: { $expr: { $gt: [{ $size: "$PetsDetails" }, 1] } } }, { $project: { Fname: 1, Sex: 1 } } ])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "PetOwners" } }, { $match: { "PetOwners": { $size: 2 } } }, { $project: { Fname: 1, Sex: 1 } } ])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "student_pets" } }, { $unwind: "$student_pets" }, { $lookup: { from: "Pets", localField: "student_pets.PetID", foreignField: "PetID", as: "pet_info" } }, { $unwind: "$pet_info" }, { $match: { "pet_info.pet_age": 3, "pet_info.PetType": "cat" } }, { $project: { LName: 1 } } ])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "student_pets" } }, { $unwind: "$student_pets" }, { $lookup: { from: "Pets", localField: "student_pets.PetID", foreignField: "PetID", as: "pet_info" } }, { $unwind: "$pet_info" }, { $match: { "pet_info.pet_age": 3, "pet_info.PetType": "cat" } }, { $project: { LName: 1 } }])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "Pets" } }, { $match: { "Pets": { $size: 0 } } }, { $group: { _id: null, AverageAge: { $avg: "$Age" } } }, { $project: { AverageAge: 1 } } ])	pets_1
+db.Student.aggregate([ { $lookup: { from: "Has_Pet", localField: "StuID", foreignField: "StuID", as: "PetOwners" } }, { $match: { PetOwners: { $size: 0 } } }, { $group: { _id: null, averageAge: { $avg: "$Age" } } }, { $project: { averageAge: 1 } } ])	pets_1
+db.continents.aggregate([ { $lookup: { from: "countries", localField: "ContId", foreignField: "Continent", as: "countries" } }, { $project: { ContId: 1, Continent: 1, countryCount: { $size: "$countries" } } }])	car_1
+db.continents.aggregate([ { $lookup: { from: "countries", localField: "ContId", foreignField: "Continent", as: "countries" } }, { $project: { "_id": 0, "ContId": 1, "Continent": 1, "countriesCount": { $size: "$countries" } } }])	car_1
+db.car_names.aggregate([ { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "car_data" } }, { $unwind: "$car_data" }, { $sort: { "car_data.Horsepower": 1 } }, { $limit: 1 }, { $project: { Model: 1 } }])	car_1
+db.car_names.aggregate([ { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "car_data" } }, { $unwind: "$car_data" }, { $sort: { "car_data.Horsepower": 1 } }, { $limit: 1 }, { $project: { Model: 1 } }])	car_1
+db.car_makers.aggregate([ { $lookup: { from: "model_list", localField: "Id", foreignField: "Maker", as: "models" } }, { $unwind: "$models" }, { $lookup: { from: "car_names", localField: "models.Model", foreignField: "Model", as: "car_names" } }, { $unwind: "$car_names" }, { $lookup: { from: "cars_data", localField: "car_names.MakeId", foreignField: "Id", as: "cars_data" } }, { $unwind: "$cars_data" }, { $match: { "cars_data.Year": 1970 } }, { $group: { _id: "$Maker" } }, { $project: { Maker: "$_id" } } ])	car_1
+db.car_makers.aggregate([ { $lookup: { from: "model_list", localField: "Id", foreignField: "Maker", as: "models" } }, { $unwind: "$models" }, { $lookup: { from: "car_names", localField: "models.Model", foreignField: "Model", as: "car_names" } }, { $unwind: "$car_names" }, { $lookup: { from: "cars_data", localField: "car_names.MakeId", foreignField: "Id", as: "cars_data" } }, { $unwind: "$cars_data" }, { $match: { "cars_data.Year": 1970 } }, { $group: { _id: "$Maker" } }])	car_1
+db.cars_data.aggregate([ { $lookup: { from: "car_names", localField: "Id", foreignField: "MakeId", as: "car_names_data" } }, { $match: { "car_names_data.Make": "amc hornet sportabout (sw)" } }, { $project: { Accelerate: 1 } }])	car_1
+db.cars_data.aggregate([ { $lookup: { from: "car_names", localField: "Id", foreignField: "MakeId", as: "car_name_info" } }, { $match: { "car_name_info.Make": "amc hornet sportabout (sw)" } }, { $project: { Accelerate: 1 } } ])	car_1
+db.cars_data.aggregate([ { $match: { Cylinders: 8, Year: 1974 } }, { $group: { _id: null, minWeight: { $min: "$Weight" } } }, { $project: { minWeight: 1 } }])	car_1
+db.cars_data.aggregate([ { $match: { Cylinders: 8, Year: 1974 } }, { $group: { _id: null, minWeight: { $min: "$Weight" } } }, { $project: { minWeight: 1 } }])	car_1
+db.cars_data.aggregate([ { $group: { _id: "$Year", averageWeight: { $avg: "$Weight" } } }])	car_1
+db.cars_data.aggregate([ { $group: { _id: "$Year", averageWeight: { $avg: "$Weight" } } }])	car_1
+db.cars_data.aggregate([ { $match: { Cylinders: 3 } }, { $sort: { Horsepower: -1 } }, { $limit: 1 }, { $lookup: { from: "car_names", localField: "Id", foreignField: "MakeId", as: "carName" } }, { $unwind: "$carName" }, { $project: { Horsepower: 1, Make: "$carName.Make" } } ])	car_1
+db.car_names.aggregate([ { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "car_data" } }, { $unwind: "$car_data" }, { $match: { "car_data.Cylinders": 3 } }, { $sort: { "car_data.Horsepower": -1 } }, { $limit: 1 }, { $project: { Horsepower: "$car_data.Horsepower", Make: 1 } }])	car_1
+db.car_names.aggregate([ { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "car_data" } }, { $unwind: "$car_data" }, { $sort: { "car_data.MPG": -1 } }, { $limit: 1 }, { $project: { Model: 1 } }])	car_1
+db.car_names.aggregate([ { $match: { Model: "volvo" } }, { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "car_data" } }, { $unwind: "$car_data" }, { $group: { _id: null, avgEdispl: { $avg: "$car_data.Edispl" } } }, { $project: { avgEdispl: 1 } } ])	car_1
+db.car_names.aggregate([ { $match: { Model: "volvo" }}, { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "carsData" }}, { $unwind: "$carsData" }, { $group: { _id: null, averageEdispl: { $avg: "$carsData.Edispl" } }}, { $project: { averageEdispl: 1 }} ])	car_1
+db.cars_data.aggregate([ { $group: { _id: "$Cylinders", maxAccelerate: { $max: "$Accelerate" } } }])	car_1
+db.cars_data.aggregate([ { $group: { _id: "$Cylinders", maxAccelerate: { $max: "$Accelerate" } } }])	car_1
+db.car_names.aggregate([ { $group: { _id: "$Model", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Model: "$_id" } }])	car_1
+db.car_names.aggregate([ { $group: { _id: "$Model", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Model: "$_id" } }])	car_1
+db.car_makers.aggregate([ { $match: { FullName: "American Motor Company" } }, { $lookup: { from: "model_list", localField: "Id", foreignField: "Maker", as: "models" } }, { $unwind: "$models" }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	car_1
+db.car_makers.aggregate([ { $match: { FullName: "American Motor Company" } }, { $lookup: { from: "model_list", localField: "Id", foreignField: "Maker", as: "models" } }, { $project: { modelCount: { $size: "$models" } } }])	car_1
+db.car_makers.aggregate([ { $lookup: { from: "model_list", localField: "Id", foreignField: "Maker", as: "models" } }, { $project: { FullName: 1, _id: "$Id", modelsCount: { $size: "$models" } } }, { $match: { modelsCount: { $gt: 3 } } }, { $project: { Id: "$_id", FullName: 1 } } ])	car_1
+db.car_makers.aggregate([ { $lookup: { from: "model_list", localField: "Id", foreignField: "Maker", as: "models" } }, { $match: { "models.0": { $exists: true } } }, { $addFields: { modelCount: { $size: "$models" } } }, { $match: { modelCount: { $gt: 3 } } }, { $project: { Id: 1, FullName: 1 } }])	car_1
+db.car_names.aggregate([ { $lookup: { from: "model_list", localField: "Model", foreignField: "Model", as: "model_info" } }, { $unwind: "$model_info" }, { $lookup: { from: "car_makers", localField: "model_info.Maker", foreignField: "Id", as: "maker_info" } }, { $unwind: "$maker_info" }, { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "car_data" } }, { $unwind: "$car_data" }, { $match: { $or: [ { "maker_info.FullName": "General Motors" }, { "car_data.Weight": { $gt: 3500 } } ] } }, { $group: { _id: "$model_info.Model" } }, { $project: { Model: "$_id" } } ])	car_1
+db.car_names.aggregate([ { $lookup: { from: "model_list", localField: "Model", foreignField: "Model", as: "model_info" } }, { $unwind: "$model_info" }, { $lookup: { from: "car_makers", localField: "model_info.Maker", foreignField: "Id", as: "maker_info" } }, { $unwind: "$maker_info" }, { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "car_data" } }, { $unwind: "$car_data" }, { $match: { $or: [ { "maker_info.FullName": "General Motors" }, { "car_data.Weight": { $gt: 3500 } } ] } }, { $group: { _id: "$model_info.Model" } } ])	car_1
+db.cars_data.aggregate([ { $match: { Weight: { $gte: 3000, $lte: 4000 } } }, { $group: { _id: "$Year" } } ])	car_1
+db.cars_data.aggregate([ { $match: { Weight: { $lt: 4000, $gt: 3000 } } }, { $group: { _id: "$Year" } }, { $project: { Year: "$_id" } } ])	car_1
+db.cars_data.find({}, {Horsepower: 1}).sort({Accelerate: -1}).limit(1)	car_1
+db.cars_data.find({}, { Horsepower: 1 }).sort({ Accelerate: -1 }).limit(1)	car_1
+db.cars_data.aggregate([ { $lookup: { from: "car_names", localField: "Id", foreignField: "MakeId", as: "car_names" } }, { $unwind: "$car_names" }, { $match: { "car_names.Model": "volvo" } }, { $sort: { "Accelerate": 1 } }, { $limit: 1 }, { $project: { "_id": 0, "Cylinders": 1 } }])	car_1
+db.cars_data.aggregate([ { $lookup: { from: "car_names", localField: "Id", foreignField: "MakeId", as: "car_names_data" } }, { $unwind: "$car_names_data" }, { $match: { "car_names_data.Model": "volvo" } }, { $sort: { "Accelerate": 1 } }, { $limit: 1 }, { $project: { "_id": 0, "Cylinders": 1 } }])	car_1
+db.cars_data.aggregate([ { $sort: { "Horsepower": -1 } }, { $limit: 1 }, { $project: { "Accelerate": 1 } }, { $lookup: { from: "cars_data", let: { maxAcc: "$Accelerate" }, pipeline: [ { $match: { $expr: { $gt: ["$Accelerate", "$$maxAcc"] } } }, { $count: "count" } ], as: "carsWithGreaterAcc" } }, { $unwind: "$carsWithGreaterAcc" }, { $replaceRoot: { newRoot: "$carsWithGreaterAcc" } } ])	car_1
+db.cars_data.aggregate([ { $sort: { Horsepower: -1 } }, { $limit: 1 }, { $group: { _id: null, maxAccelerate: { $first: "$Accelerate" } } }, { $lookup: { from: "cars_data", let: { maxAccel: "$maxAccelerate" }, pipeline: [ { $match: { $expr: { $gt: ["$Accelerate", "$$maxAccel"] } } }, { $count: "count" } ], as: "carCount" } }, { $unwind: "$carCount" }, { $replaceRoot: { newRoot: "$carCount" } } ])	car_1
+db.cars_data.aggregate([ { $match: { Cylinders: { $gt: 6 } } }, { $count: "total" }])	car_1
+db.cars_data.aggregate([ { $match: { Cylinders: { $gt: 6 } } }, { $count: "total" }])	car_1
+db.car_names.aggregate([ { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "car_data" } }, { $unwind: "$car_data" }, { $match: { "car_data.Cylinders": 4 } }, { $sort: { "car_data.Horsepower": -1 } }, { $limit: 1 }, { $project: { Model: 1 } }])	car_1
+db.car_names.aggregate([ { $lookup: { from: "cars_data", localField: "MakeId", foreignField: "Id", as: "car_data" } }, { $unwind: "$car_data" }, { $match: { "car_data.Cylinders": 4 } }, { $sort: { "car_data.Horsepower": -1 } }, { $limit: 1 }, { $project: { Model: 1 } }])	car_1
+db.airlines.findOne({Airline: 'JetBlue Airways'}, {Country: 1})	flight_2
+db.airlines.findOne({Airline: 'JetBlue Airways'}, {Country: 1})	flight_2
+db.airlines.find({Airline: 'JetBlue Airways'}, {Abbreviation: 1})	flight_2
+db.airlines.find({Airline: 'JetBlue Airways'}, {Abbreviation: 1})	flight_2
+db.airlines.find({Country: 'USA'}, {Airline: 1, Abbreviation: 1})	flight_2
+db.airlines.find({Country: 'USA'}, {Airline: 1, Abbreviation: 1})	flight_2
+db.airlines.find({Abbreviation: 'UAL'}, {Airline: 1})	flight_2
+db.airlines.find({Abbreviation: 'UAL'}, {Airline: 1})	flight_2
+db.airports.find({AirportCode: 'AKO'}, {AirportName: 1})	flight_2
+db.airports.find({AirportCode: 'AKO'}, {AirportName: 1})	flight_2
+db.flights.aggregate([ { $lookup: { from: "airlines", localField: "Airline", foreignField: "uid", as: "airline_info" } }, { $match: { "airline_info.Airline": "JetBlue Airways" } }, { $count: "total_flights" } ])	flight_2
+db.flights.aggregate([ { $lookup: { from: "airlines", localField: "Airline", foreignField: "uid", as: "airline_info" } }, { $match: { "airline_info.Airline": "JetBlue Airways" } }, { $count: "JetBlue_Flights" } ])	flight_2
+db.airlines.aggregate([ { $lookup: { from: "flights", localField: "uid", foreignField: "Airline", as: "flights" } }, { $match: { "flights.Airline": { $exists: true } } }, { $project: { Airline: 1 } }, { $group: { _id: "$Airline", count: { $sum: 1 } } }, { $match: { count: { $lt: 200 } } }, { $project: { _id: 1, count: 0 } }])	flight_2
+db.airlines.aggregate([ { $lookup: { from: "flights", localField: "uid", foreignField: "Airline", as: "flights" } }, { $match: { "flights.Airline": { $exists: true } } }, { $project: { Airline: 1 } }, { $group: { _id: "$Airline", count: { $sum: 1 } } }, { $match: { count: { $lt: 200 } } }, { $project: { _id: 1, count: 0 } }])	flight_2
+db.employee.find({}, { Name: 1}).sort({Age: 1})	employee_hire_evaluation
+db.employee.find({}, { Name: 1}).sort({Age: 1})	employee_hire_evaluation
+db.employee.aggregate([ { $group: { _id: "$City", count: { $sum: 1 } } }])	employee_hire_evaluation
+db.employee.aggregate([ { $group: { _id: "$City", count: { $sum: 1 } } }])	employee_hire_evaluation
+db.employee.aggregate([ { $match: { Age: { $lt: 30 } } }, { $group: { _id: "$City", count: { $sum: 1 } } }, { $match: { count: { $gt: 1 } } }, { $project: { City: "$_id" } } ])	employee_hire_evaluation
+db.employee.aggregate([ { $match: { Age: { $lt: 30 } } }, { $group: { _id: "$City", count: { $sum: 1 } } }, { $match: { count: { $gt: 1 } } }, { $project: { _id: 1, count: 0 } } ])	employee_hire_evaluation
+db.shop.aggregate([ { $group: { _id: "$Location", count: { $sum: 1 } } }])	employee_hire_evaluation
+db.shop.aggregate([ { $group: { _id: "$Location", count: { $sum: 1 } } }])	employee_hire_evaluation
+db.shop.aggregate([ { $group: { _id: null, minProducts: { $min: "$Number_products" }, maxProducts: { $max: "$Number_products" } } }, { $project: { minProducts: 1, maxProducts: 1 } }])	employee_hire_evaluation
+db.shop.aggregate([ { $group: { _id: null, minProducts: { $min: "$Number_products" }, maxProducts: { $max: "$Number_products" } } }, { $project: { minProducts: 1, maxProducts: 1 } }])	employee_hire_evaluation
+db.shop.find({}, { Name: 1, Location: 1, District: 1 }).sort({ Number_products: -1 })	employee_hire_evaluation
+db.shop.find({}, { Name: 1, Location: 1, District: 1 }).sort({ Number_products: -1 })	employee_hire_evaluation
+db.employee.aggregate([ { $lookup: { from: "evaluation", localField: "Employee_ID", foreignField: "Employee_ID", as: "evaluation_data" } }, { $project: { Name: 1, evaluation_count: { $size: "$evaluation_data" } } }, { $sort: { evaluation_count: -1 } }, { $limit: 1 }, { $project: { Name: 1 }} ])	employee_hire_evaluation
+db.employee.aggregate([ { $lookup: { from: "evaluation", localField: "Employee_ID", foreignField: "Employee_ID", as: "evaluation_data" } }, { $project: { Name: 1, evaluation_count: { $size: "$evaluation_data" } } }, { $sort: { evaluation_count: -1 } }, { $limit: 1 }, { $project: { Name: 1 }} ])	employee_hire_evaluation
+db.shop.aggregate([ { $lookup: { from: "hiring", localField: "Shop_ID", foreignField: "Shop_ID", as: "hires" } }, { $project: { Name: 1, hiresCount: { $size: "$hires" } } }, { $sort: { hiresCount: -1 } }, { $limit: 1 }, { $project: { Name: 1 } } ])	employee_hire_evaluation
+db.shop.aggregate([ { $lookup: { from: "hiring", localField: "Shop_ID", foreignField: "Shop_ID", as: "hiring_info" } }, { $match: { "hiring_info": { $size: 0 } } }, { $project: { Name: 1 } } ])	employee_hire_evaluation
+db.shop.aggregate([ { $lookup: { from: "hiring", localField: "Shop_ID", foreignField: "Shop_ID", as: "hiring_info" } }, { $match: { hiring_info: { $size: 0 } } }, { $project: { Name: 1 } } ])	employee_hire_evaluation
+db.hiring.aggregate([ { $lookup: { from: "shop", localField: "Shop_ID", foreignField: "Shop_ID", as: "shop_info" } }, { $unwind: "$shop_info" }, { $group: { _id: "$shop_info.Name", count: { $sum: 1 } } }, { $project: { ShopName: "$_id", EmployeeCount: "$count" } }])	employee_hire_evaluation
+db.hiring.aggregate([ { $lookup: { from: "shop", localField: "Shop_ID", foreignField: "Shop_ID", as: "shop_info" } }, { $unwind: "$shop_info" }, { $group: { _id: "$shop_info.Name", count: { $sum: 1 } } }, { $project: { name: "$_id", count: 1 } }])	employee_hire_evaluation
+db.evaluation.aggregate([ { $group: { _id: null, totalBonus: { $sum: "$Bonus" } } }, { $project: { sum: "$totalBonus" } }])	employee_hire_evaluation
+db.evaluation.aggregate([ { $group: { _id: null, totalBonus: { $sum: "$Bonus" } } }, { $project: { sum: "$totalBonus" } }])	employee_hire_evaluation
+db.hiring.find({})	employee_hire_evaluation
+db.hiring.find({})	employee_hire_evaluation
+db.shop.aggregate([ { $group: { _id: "$Location" } }, { $count: "distinctLocations" } ])	employee_hire_evaluation
+db.Documents.find({}, { Document_ID: 1, Document_Name: 1, Document_Description: 1 })	cre_Doc_Template_Mgt
+db.Documents.find({}, { Document_ID: 1, Document_Name: 1, Document_Description: 1 })	cre_Doc_Template_Mgt
+db.Documents.find( { Document_Description: { $regex: /w/ } }, { Document_Name: 1, Template_ID: 1 })	cre_Doc_Template_Mgt
+db.Documents.find( { Document_Description: { $regex: /w/ } }, { Document_Name: 1, Template_ID: 1 })	cre_Doc_Template_Mgt
+db.Documents.find( { "Document_Name": "Robbin CV" }, { "_id": 0, "Document_ID": 1, "Template_ID": 1, "Document_Description": 1 })	cre_Doc_Template_Mgt
+db.Documents.find( { Document_Name: 'Robbin CV' }, { Document_ID: 1, Template_ID: 1, Document_Description: 1 } )	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $group: { _id: "$Template_ID" } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } } ])	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $group: { _id: "$Template_ID" } }, { $count: "unique_templates" } ])	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $lookup: { from: "Templates", localField: "Template_ID", foreignField: "Template_ID", as: "template_data" } }, { $unwind: "$template_data" }, { $match: { "template_data.Template_Type_Code": "PPT" } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $lookup: { from: "Templates", localField: "Template_ID", foreignField: "Template_ID", as: "template_info" } }, { $unwind: "$template_info" }, { $match: { "template_info.Template_Type_Code": "PPT" } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $group: { _id: "$Template_ID", count: { $sum: 1 } } }])	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $group: { _id: "$Template_ID", count: { $sum: 1 } } }])	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $group: { _id: "$Template_ID", count: { $sum: 1 } } }, { $match: { count: { $gt: 1 } } }, { $project: { Template_ID: "$_id" } }])	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $group: { _id: "$Template_ID", count: { $sum: 1 } } }, { $match: { count: { $gt: 1 } } }, { $project: { Template_ID: "$_id" } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $lookup: { from: "Documents", localField: "Template_ID", foreignField: "Template_ID", as: "documents" } }, { $match: { "documents": { $size: 0 } } }, { $project: { Template_ID: 1 } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $lookup: { from: "Documents", localField: "Template_ID", foreignField: "Template_ID", as: "documents" } }, { $match: { "documents": { $size: 0 } } }, { $project: { Template_ID: 1 } }])	cre_Doc_Template_Mgt
+db.Templates.find({}, {Template_ID: 1, Version_Number: 1, Template_Type_Code: 1})	cre_Doc_Template_Mgt
+db.Templates.find({}, { Template_ID: 1, Version_Number: 1, Template_Type_Code: 1 })	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $group: { _id: "$Template_Type_Code" } }])	cre_Doc_Template_Mgt
+db.Templates.find( { "Template_Type_Code": { "$in": ["PP", "PPT"] } }, { "_id": 0, "Template_ID": 1 })	cre_Doc_Template_Mgt
+db.Templates.find( { "Template_Type_Code": { $in: ["PP", "PPT"] } }, { "_id": 0, "Template_ID": 1 })	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $match: { Template_Type_Code: "CV" } }, { $count: "TotalCVTemplates" } ])	cre_Doc_Template_Mgt
+db.Templates.find({ Version_Number: { $gt: 5 } }, { Version_Number: 1, Template_Type_Code: 1 })	cre_Doc_Template_Mgt
+db.Templates.find( { Version_Number: { $gt: 5 } }, { Version_Number: 1, Template_Type_Code: 1 } )	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { _id: 1 } } ])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { _id: 1 } } ])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }, { $match: { count: { $lt: 3 } } }, { $project: { Template_Type_Code: "$_id" } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }, { $match: { count: { $lt: 3 } } }, { $project: { Template_Type_Code: "$_id" } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $group: { _id: "$Template_Type_Code", minVersion: { $min: "$Version_Number" } } }, { $sort: { minVersion: 1 } }, { $limit: 1 }, { $project: { template_type_code: "$_id", minVersion: 1 } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $group: { _id: "$Template_Type_Code", minVersion: { $min: "$Version_Number" } }}, { $project: { Version_Number: "$minVersion", Template_Type_Code: "$_id" }}, { $sort: { Version_Number: 1 } }, { $limit: 1 } ])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $lookup: { from: "Documents", localField: "Template_ID", foreignField: "Template_ID", as: "documents" } }, { $match: { "documents.Document_Name": "Data base" } }, { $project: { "Template_Type_Code": 1 } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $lookup: { from: "Documents", localField: "Template_ID", foreignField: "Template_ID", as: "documents" } }, { $match: { "documents.Document_Name": "Data base" } }, { $project: { "_id": 0, "Template_Type_Code": 1 } }])	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $lookup: { from: "Templates", localField: "Template_ID", foreignField: "Template_ID", as: "template" } }, { $unwind: "$template" }, { $lookup: { from: "Ref_Template_Types", localField: "template.Template_Type_Code", foreignField: "Template_Type_Code", as: "templateType" } }, { $unwind: "$templateType" }, { $match: { "templateType.Template_Type_Code": "BK" } }, { $project: { Document_Name: 1 } } ])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $match: { "Template_Type_Code": "BK" } }, { $lookup: { from: "Documents", localField: "Template_ID", foreignField: "Template_ID", as: "documents" } }, { $unwind: "$documents" }, { $project: { "_id": 0, "Document_Name": "$documents.Document_Name" } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $lookup: { from: "Documents", localField: "Template_ID", foreignField: "Template_ID", as: "documents" } }, { $unwind: "$documents" }, { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }, { $project: { Template_Type_Code: "$_id", count: 1 } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $lookup: { from: "Documents", localField: "Template_ID", foreignField: "Template_ID", as: "documents" } }, { $unwind: "$documents" }, { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }, { $project: { Template_Type_Code: "$_id", count: 1 } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $lookup: { from: "Documents", localField: "Template_ID", foreignField: "Template_ID", as: "documents" } }, { $unwind: "$documents" }, { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { template_type_code: "$_id" } }])	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $lookup: { from: "Documents", localField: "Template_ID", foreignField: "Template_ID", as: "documents" } }, { $unwind: "$documents" }, { $group: { _id: "$Template_Type_Code", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { template_type_code: "$_id" } }])	cre_Doc_Template_Mgt
+db.Ref_Template_Types.find({}, { Template_Type_Code: 1, Template_Type_Description: 1})	cre_Doc_Template_Mgt
+db.Ref_Template_Types.find({}, { Template_Type_Code: 1, Template_Type_Description: 1})	cre_Doc_Template_Mgt
+db.Ref_Template_Types.find( { Template_Type_Code: 'AD' }, { Template_Type_Description: 1 })	cre_Doc_Template_Mgt
+db.Ref_Template_Types.find( { Template_Type_Code: 'AD' }, { Template_Type_Description: 1 })	cre_Doc_Template_Mgt
+db.Ref_Template_Types.findOne({Template_Type_Description: 'Book'}, {Template_Type_Code: 1})	cre_Doc_Template_Mgt
+db.Ref_Template_Types.findOne({ Template_Type_Description: 'Book' }, { Template_Type_Code: 1 })	cre_Doc_Template_Mgt
+db.Ref_Template_Types.aggregate([ { $lookup: { from: "Templates", localField: "Template_Type_Code", foreignField: "Template_Type_Code", as: "Templates" } }, { $unwind: "$Templates" }, { $lookup: { from: "Documents", localField: "Templates.Template_ID", foreignField: "Template_ID", as: "Documents" } }, { $match: { "Documents": { $exists: true, $not: {$size: 0} } } }, { $group: { _id: "$Template_Type_Description" } }, { $project: { Template_Type_Description: "$_id" } } ])	cre_Doc_Template_Mgt
+db.Ref_Template_Types.aggregate([ { $lookup: { from: "Templates", localField: "Template_Type_Code", foreignField: "Template_Type_Code", as: "templates" } }, { $unwind: "$templates" }, { $lookup: { from: "Documents", localField: "templates.Template_ID", foreignField: "Template_ID", as: "documents" } }, { $unwind: "$documents" }, { $group: { _id: "$Template_Type_Description" } }, { $project: { Template_Type_Description: "$_id" } }])	cre_Doc_Template_Mgt
+db.Templates.find( { "Template_Type_Code": { "$in": db.Ref_Template_Types.find( { "Template_Type_Description": "Presentation" }, { "Template_Type_Code": 1, "_id": 0 } ).toArray().map(function(doc) { return doc.Template_Type_Code }) } }, { "Template_ID": 1, "_id": 0 })	cre_Doc_Template_Mgt
+db.Templates.aggregate([ { $lookup: { from: "Ref_Template_Types", localField: "Template_Type_Code", foreignField: "Template_Type_Code", as: "ref_type" } }, { $match: { "ref_type.Template_Type_Description": "Presentation" } }, { $project: { Template_ID: 1 } } ])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $lookup: { from: "Documents", localField: "Document_ID", foreignField: "Document_ID", as: "documents" } }, { $match: { "documents.Document_Name": "Summer Show" } }, { $count: "total" }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $lookup: { from: "Documents", localField: "Document_ID", foreignField: "Document_ID", as: "documents" } }, { $match: { "documents.Document_Name": "Summer Show" } }, { $count: "total" }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $lookup: { from: "Documents", localField: "Document_ID", foreignField: "Document_ID", as: "documents" } }, { $match: { "documents.Document_Name": "Welcome to NY" } }, { $project: { Paragraph_ID: 1, Paragraph_Text: 1 } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $lookup: { from: "Documents", localField: "Document_ID", foreignField: "Document_ID", as: "documents" } }, { $match: { "documents.Document_Name": "Welcome to NY" } }, { $project: { Paragraph_ID: 1, Paragraph_Text: 1 } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $lookup: { from: "Documents", localField: "Document_ID", foreignField: "Document_ID", as: "documents" } }, { $match: { "documents.Document_Name": "Customer reviews" } }, { $project: { Paragraph_Text: 1 } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $lookup: { from: "Documents", localField: "Document_ID", foreignField: "Document_ID", as: "documents" } }, { $match: { "documents.Document_Name": "Customer reviews" } }, { $project: { Paragraph_Text: 1 } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $group: { _id: "$Document_ID", count: { $sum: 1 } } }, { $sort: { _id: 1 } }, { $project: { document_id: "$_id", count: 1 } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $group: { _id: "$Document_ID", count: { $sum: 1 } } }, { $sort: { _id: 1 } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $lookup: { from: "Documents", localField: "Document_ID", foreignField: "Document_ID", as: "document_info" } }, { $unwind: "$document_info" }, { $group: { _id: "$Document_ID", document_name: { $first: "$document_info.Document_Name" }, number_of_paragraphs: { $sum: 1 } } }, { $project: { document_id: "$_id", document_name: 1, number_of_paragraphs: 1 } } ])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $lookup: { from: "Documents", localField: "Document_ID", foreignField: "Document_ID", as: "DocumentInfo" } }, { $unwind: "$DocumentInfo" }, { $group: { _id: "$Document_ID", Document_Name: { $first: "$DocumentInfo.Document_Name" }, NumberOfParagraphs: { $count: {} } } }, { $project: { Document_ID: "$_id", Document_Name: 1, NumberOfParagraphs: 1 } } ])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $group: { _id: "$Document_ID", count: { $sum: 1 } } }, { $match: { count: { $gte: 2 } } }, { $project: { Document_ID: "$_id" } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $group: { _id: "$Document_ID", count: { $sum: 1 } } }, { $match: { count: { $gte: 2 } } }, { $project: { Document_ID: "$_id" } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $group: { _id: "$Document_ID", count: { $sum: 1 } }}, { $sort: { count: -1 }}, { $limit: 1 }, { $lookup: { from: "Documents", localField: "_id", foreignField: "Document_ID", as: "document_details" }}, { $unwind: "$document_details"}, { $project: { document_id: "$_id", document_name: "$document_details.Document_Name" }} ])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $group: { _id: "$Document_ID", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $lookup: { from: "Documents", localField: "_id", foreignField: "Document_ID", as: "documentDetails" } }, { $unwind: "$documentDetails" }, { $project: { document_id: "$_id", document_name: "$documentDetails.Document_Name" } } ])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $group: { _id: "$Document_ID", count: { $sum: 1 } } }, { $match: { count: { $gte: 1, $lte: 2 } } }, { $project: { Document_ID: "$_id" } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $group: { _id: "$Document_ID", count: { $sum: 1 } } }, { $match: { count: { $gte: 1, $lte: 2 } } }, { $project: { Document_ID: "$_id" } }])	cre_Doc_Template_Mgt
+db.Paragraphs.aggregate([ { $match: { $or: [{ Paragraph_Text: 'Brazil' }, { Paragraph_Text: 'Ireland' }] } }, { $group: { _id: "$Document_ID", countries: { $addToSet: "$Paragraph_Text" } } }, { $match: { countries: { $all: ['Brazil', 'Ireland'] } } }, { $project: { Document_ID: "$_id" } } ])	cre_Doc_Template_Mgt
+db.Documents.aggregate([ { $lookup: { from: "Paragraphs", localField: "Document_ID", foreignField: "Document_ID", as: "paragraphs" } }, { $match: { "paragraphs.Paragraph_Text": { $all: ["Brazil", "Ireland"]} } }, { $project: { _id: "$Document_ID" } } ])	cre_Doc_Template_Mgt
+db.teacher.find({}, {Name: 1}).sort({Age: 1})	course_teach
+db.teacher.find({}, {Name: 1}).sort({Age: 1})	course_teach
+db.teacher.find({}, {Age: 1, Hometown: 1})	course_teach
+db.teacher.aggregate([ { $project: { Age: 1, Hometown: 1 } }])	course_teach
+db.teacher.find({ hometown: { $ne: 'Little Lever Urban District' } }, { Name: 1 })	course_teach
+db.teacher.find({hometown: {$ne: 'Little Lever Urban District'}}, { Name: 1})	course_teach
+db.teacher.find({}, {Hometown: 1}).sort({Age: 1}).limit(1)	course_teach
+db.teacher.find({}, {Hometown: 1}).sort({Age: 1}).limit(1)	course_teach
+db.teacher.aggregate([ { $group: { _id: "$Hometown", count: { $sum: 1 } } }, { $project: { Hometown: "$_id", count: 1 } }])	course_teach
+db.teacher.aggregate([ { $group: { _id: "$Hometown", count: { $sum: 1 } } }])	course_teach
+db.teacher.aggregate([ { $group: { _id: "$Hometown", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { _id: 1 } } ])	course_teach
+db.teacher.aggregate([ { $lookup: { from: "course_arrange", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "arrangements" } }, { $unwind: "$arrangements" }, { $lookup: { from: "course", localField: "arrangements.Course_ID", foreignField: "Course_ID", as: "course_details" } }, { $unwind: "$course_details" }, { $project: { Name: 1, Course: "$course_details.Course" } } ])	course_teach
+db.teacher.aggregate([ { $lookup: { from: "course_arrange", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "courses" } }, { $unwind: "$courses" }, { $lookup: { from: "course", localField: "courses.Course_ID", foreignField: "Course_ID", as: "course" } }, { $unwind: "$course" }, { $project: { Name: 1, Course: "$course.Course" } } ])	course_teach
+db.course_arrange.aggregate([ { $lookup: { from: "course", localField: "Course_ID", foreignField: "Course_ID", as: "course_info" } }, { $lookup: { from: "teacher", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "teacher_info" } }, { $unwind: "$course_info" }, { $unwind: "$teacher_info" }, { $project: { Name: "$teacher_info.Name", Course: "$course_info.Course" } }, { $sort: { Name: 1 } }])	course_teach
+db.course_arrange.aggregate([ { $lookup: { from: "course", localField: "Course_ID", foreignField: "Course_ID", as: "course_info" } }, { $lookup: { from: "teacher", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "teacher_info" } }, { $unwind: "$course_info" }, { $unwind: "$teacher_info" }, { $project: { Name: "$teacher_info.Name", Course: "$course_info.Course" } }, { $sort: { Name: 1 } }])	course_teach
+db.course_arrange.aggregate([ { $lookup: { from: "course", localField: "Course_ID", foreignField: "Course_ID", as: "course_info" } }, { $unwind: "$course_info" }, { $match: { "course_info.Course": "Math" } }, { $lookup: { from: "teacher", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "teacher_info" } }, { $unwind: "$teacher_info" }, { $project: { Name: "$teacher_info.Name" } }])	course_teach
+db.course_arrange.aggregate([ { $lookup: { from: "course", localField: "Course_ID", foreignField: "Course_ID", as: "course_info" } }, { $unwind: "$course_info" }, { $match: { "course_info.Course": "Math" } }, { $lookup: { from: "teacher", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "teacher_info" } }, { $unwind: "$teacher_info" }, { $project: { Name: "$teacher_info.Name" } }])	course_teach
+db.course_arrange.aggregate([ { $lookup: { from: "teacher", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "teacher_info" } }, { $unwind: "$teacher_info" }, { $group: { _id: "$teacher_info.Name", count: { $sum: 1 } } }, { $project: { Name: "$_id", NumberOfCourses: "$count" } }])	course_teach
+db.course_arrange.aggregate([ { $lookup: { from: "teacher", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "teacher_info" } }, { $unwind: "$teacher_info" }, { $group: { _id: "$teacher_info.Name", count: { $sum: 1 } } }, { $project: { Name: "$_id", Count: "$count" } }])	course_teach
+db.course_arrange.aggregate([ { $lookup: { from: "teacher", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "teacher_info" } }, { $unwind: "$teacher_info" }, { $group: { _id: "$teacher_info.Name", count: { $sum: 1 } } }, { $match: { count: { $gte: 2 } } }, { $project: { Name: "$_id" } }])	course_teach
+db.course_arrange.aggregate([ { $lookup: { from: "teacher", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "teacher_info" } }, { $unwind: "$teacher_info" }, { $group: { _id: "$teacher_info.Name", count: { $sum: 1 } } }, { $match: { count: { $gte: 2 } } }, { $project: { Name: "$_id" } }])	course_teach
+db.teacher.aggregate([ { $lookup: { from: "course_arrange", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "arrangements" } }, { $match: { "arrangements": { $size: 0 } } }, { $project: { Name: 1 } } ])	course_teach
+db.teacher.aggregate([ { $lookup: { from: "course_arrange", localField: "Teacher_ID", foreignField: "Teacher_ID", as: "arrangements" } }, { $match: { arrangements: { $size: 0 } } }, { $project: { Name: 1 } } ])	course_teach
+db.visitor.find( {Level_of_membership: {$gt: 4}}, { Name: 1}).sort({Level_of_membership: -1})	museum_visit
+db.visitor.aggregate([ { $match: { Level_of_membership: { $lte: 4 } } }, { $group: { _id: null, averageAge: { $avg: "$Age" } } }, { $project: { avg: "$averageAge" } }])	museum_visit
+db.visitor.find( { Level_of_membership: { $gt: 4 } }, { Name: 1, Level_of_membership: 1 }).sort({ Age: -1 })	museum_visit
+db.museum.find({}, { Museum_ID: 1, Name: 1 }).sort({ Num_of_Staff: -1 }).limit(1)	museum_visit
+db.museum.find( { Name: "Plaza Museum" }, { Num_of_Staff: 1, Open_Year: 1 })	museum_visit
+db.visit.aggregate([ { $group: { _id: "$Museum_ID", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $lookup: { from: "museum", localField: "_id", foreignField: "Museum_ID", as: "museum" } }, { $project: { _id: 1, name: { $arrayElemAt: ["$museum.Name", 0] } } }, { $limit: 1 } ])	museum_visit
+db.museum.find( { Museum_ID: { $nin: db.visit.distinct("Museum_ID") } }, { Name: 1 })	museum_visit
+db.visit.aggregate([ { $group: { _id: null, avgNumOfTicket: { $avg: "$Num_of_Ticket" }, maxNumOfTicket: { $max: "$Num_of_Ticket" } } }, { $project: { avgNumOfTicket: 1, maxNumOfTicket: 1 } }])	museum_visit
+db.matches.aggregate([ { $group: { _id: null, averageRank: { $avg: "$winner_rank" } } }, { $project: { avg: "$averageRank" } }])	wta_1
+db.matches.aggregate([ { $group: { _id: null, averageRank: { $avg: "$winner_rank" } } }, { $project: { avg: "$averageRank" } }])	wta_1
+db.matches.aggregate([ { $group: { _id: null, min_loser_rank: { $min: "$loser_rank" } } }, { $project: { min: "$min_loser_rank" } }])	wta_1
+db.matches.aggregate([ { $group: { _id: null, min_loser_rank: { $min: "$loser_rank" } } }, { $project: { min: "$min_loser_rank" } }])	wta_1
+db.matches.aggregate([ { $group: { _id: "$loser_name" } }, { $count: "distinct_loser_names" } ])	wta_1
+db.matches.aggregate([ { $group: { _id: "$tourney_name", count: { $sum: 1 } } }, { $match: { count: { $gt: 10 } } }, { $project: { tourney_name: "$_id" } }])	wta_1
+db.matches.aggregate([ { $group: { _id: "$tourney_name", count: { $sum: 1 } } }, { $match: { count: { $gt: 10 } } }, { $project: { tourney_name: "$_id" } }])	wta_1
+db.matches.aggregate([ { $match: { year: { $in: [2013, 2016] } } }, { $group: { _id: "$winner_id", years: { $addToSet: "$year" }, winner_name: { $first: "$winner_name" } } }, { $match: { years: { $all: [2013, 2016] } } }, { $project: { winner_name: 1 } } ])	wta_1
+db.matches.aggregate([ { $match: { $or: [{ year: 2013 }, { year: 2016 }] } }, { $group: { _id: "$winner_id", years: { $addToSet: "$year" }, names: { $first: "$winner_name" } } }, { $match: { years: { $all: [2013, 2016] } } }, { $project: { winner_name: "$names" } } ])	wta_1
+db.matches.aggregate([ { $match: { $or: [{ year: 2013 }, { year: 2016 }] } }, { $count: "total_matches" } ])	wta_1
+db.players.aggregate([ { $lookup: { from: "matches", localField: "player_id", foreignField: "winner_id", as: "matches_won" } }, { $match: { "matches_won.tourney_name": { $all: ["WTA Championships", "Australian Open"] } } }, { $project: { first_name: 1, country_code: 1 } } ])	wta_1
+db.players.find({}, {first_name: 1, country_code: 1}).sort({birth_date: 1}).limit(1)	wta_1
+db.players.find({}, {first_name: 1, country_code: 1}).sort({birth_date: 1}).limit(1)	wta_1
+db.matches.aggregate([ { $group: { _id: "$year", totalMatches: { $sum: 1 } } }, { $sort: { totalMatches: -1 } }, { $limit: 1 }, { $project: { year: "$_id" } } ])	wta_1
+db.matches.aggregate([ { $group: { _id: "$year", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { year: "$_id" } }])	wta_1
+db.matches.aggregate([ { $group: { _id: "$winner_name", count: { $sum: 1 }, winner_rank_points: { $first: "$winner_rank_points" } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { winner_name: "$_id", winner_rank_points: 1 } } ])	wta_1
+db.matches.aggregate([ { $group: { _id: "$winner_name", count: { $sum: 1 }, rank_points: { $first: "$winner_rank_points" } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { winner_name: "$_id", winner_rank_points: "$rank_points" } }])	wta_1
+db.matches.aggregate([ { $match: { tourney_name: "Australian Open" } }, { $sort: { winner_rank_points: -1 } }, { $limit: 1 }, { $project: { winner_name: 1 } }])	wta_1
+db.matches.aggregate([ { $match: { tourney_name: "Australian Open" } }, { $sort: { winner_rank_points: -1 } }, { $limit: 1 }, { $project: { winner_name: 1 } }])	wta_1
+db.matches.find({}, { winner_name: 1, loser_name: 1 }).sort({ minutes: -1 }).limit(1)	wta_1
+db.matches.aggregate([ { $sort: { "minutes": -1 } }, { $limit: 1 }, { $project: { "_id": 0, "winner_name": 1, "loser_name": 1 } }])	wta_1
+db.players.aggregate([ { $group: { _id: "$country_code", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { country_code: "$_id" } }])	wta_1
+db.players.aggregate([ { $group: { _id: "$country_code", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { country_code: "$_id" } }])	wta_1
+db.matches.aggregate([ { $group: { _id: "$year", count: { $sum: 1 } } }])	wta_1
+db.matches.aggregate([ { $group: { _id: "$year", count: { $sum: 1 } } }])	wta_1
+db.matches.aggregate([ { $sort: { winner_age: 1 } }, { $limit: 3 }, { $project: { winner_name: 1, winner_rank: 1 } }])	wta_1
+db.matches.aggregate([ { $sort: { "winner_age": 1 } }, { $lookup: { from: "players", localField: "winner_id", foreignField: "player_id", as: "winner" } }, { $project: { "winner_name": { $concat: [ { $arrayElemAt: [ "$winner.first_name", 0 ] }, " ", { $arrayElemAt: [ "$winner.last_name", 0 ] } ] }, "winner_rank": 1 } }, { $limit: 3 } ])	wta_1
+db.matches.aggregate([ { $match: { tourney_name: 'WTA Championships', winner_hand: 'L' } }, { $group: { _id: "$winner_id" } }, { $count: "distinct_left_handed_winners" } ])	wta_1
+db.matches.aggregate([ { $match: { tourney_name: "WTA Championships", winner_hand: "L" } }, { $group: { _id: "$winner_name" } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	wta_1
+db.players.aggregate([ { $lookup: { from: "matches", localField: "player_id", foreignField: "winner_id", as: "matches" } }, { $unwind: "$matches" }, { $sort: { "matches.winner_rank_points": -1 } }, { $limit: 1 }, { $project: { first_name: 1, country_code: 1, birth_date: 1 } }])	wta_1
+db.players.aggregate([ { $lookup: { from: "matches", localField: "player_id", foreignField: "winner_id", as: "matches" } }, { $unwind: "$matches" }, { $sort: { "matches.winner_rank_points": -1 } }, { $limit: 1 }, { $project: { first_name: 1, country_code: 1, birth_date: 1 } }])	wta_1
+db.players.aggregate([ { $group: { _id: "$hand", count: { $sum: 1 } } }])	wta_1
+db.players.aggregate([ { $group: { _id: "$hand", count: { $sum: 1 } } }])	wta_1
+db.ship.aggregate([ { $sort: { name: -1 } }, { $project: { name: 1, tonnage: 1 } }])	battle_death
+db.battle.find({}, {name: 1, date: 1})	battle_death
+db.death.aggregate([ { $group: { _id: null, max_killed: { $max: "$killed" }, min_killed: { $min: "$killed" } } }, { $project: { max_killed: 1, min_killed: 1 } }])	battle_death
+db.death.aggregate([ { $group: { _id: null, avgInjured: { $avg: "$injured" } } }, { $project: { avgInjured:1 } }])	battle_death
+db.death.aggregate([ { $lookup: { from: "ship", localField: "caused_by_ship_id", foreignField: "id", as: "ship_info" } }, { $unwind: "$ship_info" }, { $match: { "ship_info.tonnage": "t" } }, { $project: { killed: 1, injured: 1 } }])	battle_death
+db.battle.find( { bulgarian_commander: { $ne: 'Boril' } }, { name: 1, result: 1 })	battle_death
+db.battle.aggregate([ { $lookup: { from: "ship", localField: "id", foreignField: "lost_in_battle", as: "battle_ships" } }, { $match: { "battle_ships.ship_type": "Brig" } }, { $project: { id: 1, name: 1 } }])	battle_death
+db.battle.aggregate([ { $lookup: { from: "ship", localField: "id", foreignField: "lost_in_battle", as: "ship_info" } }, { $unwind: "$ship_info" }, { $lookup: { from: "death", localField: "ship_info.id", foreignField: "caused_by_ship_id", as: "death_info" } }, { $unwind: "$death_info" }, { $group: { _id: "$id", name: { $first: "$name" }, totalKilled: { $sum: "$death_info.killed" } } }, { $match: { totalKilled: { $gt: 10 } } }, { $project: { _id: 1, name: 1 } } ])	battle_death
+db.battle.aggregate([ { $lookup: { from: "ship", localField: "id", foreignField: "lost_in_battle", as: "related_ships" } }, { $match: { "related_ships.tonnage": { $ne: "225" } } }, { $count: "total_battles_without_225_tonnage_ships_lost" } ])	battle_death
+db.battle.aggregate([ { $lookup: { from: "ship", localField: "id", foreignField: "lost_in_battle", as: "ships" } }, { $match: { "ships.name": { $in: ["Lettice", "HMS Atalanta"] } } }, { $project: { name: 1, date: 1 } }])	battle_death
+db.battle.aggregate([ { $lookup: { from: "ship", localField: "id", foreignField: "lost_in_battle", as: "ships" } }, { $match: { "ships.location": { $ne: "English Channel" } } }, { $project: { name: 1, result: 1, bulgarian_commander: 1 } }])	battle_death
+db.death.find({note: {$regex: /East/}}, { note: 1})	battle_death
+db.Addresses.find({}, {line_1: 1, line_2: 1})	student_transcripts_tracking
+db.Addresses.find({}, {line_1: 1, line_2: 1})	student_transcripts_tracking
+db.Courses.findOne({course_name: 'math'}, {course_description: 1})	student_transcripts_tracking
+db.Courses.find({course_name: 'math'}, {course_description: 1})	student_transcripts_tracking
+db.Addresses.find({city: 'Port Chelsea'}, {zip_postcode: 1})	student_transcripts_tracking
+db.Addresses.findOne({city: 'Port Chelsea'}, {zip_postcode: 1})	student_transcripts_tracking
+db.Degree_Programs.aggregate([ { $lookup: { from: "Departments", localField: "department_id", foreignField: "department_id", as: "department_info" } }, { $unwind: "$department_info" }, { $group: { _id: "$department_id", department_name: { $first: "$department_info.department_name" }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { department_name: 1, department_id: "$_id" } }])	student_transcripts_tracking
+db.Degree_Programs.aggregate([ { $group: { _id: "$department_id", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $lookup: { from: "Departments", localField: "_id", foreignField: "department_id", as: "departmentInfo" } }, { $unwind: "$departmentInfo" }, { $project: { department_name: "$departmentInfo.department_name", department_id: "$departmentInfo.department_id" } } ])	student_transcripts_tracking
+db.Degree_Programs.aggregate([ { $group: { _id: "$department_id" } }, { $count: "unique_department_count" } ])	student_transcripts_tracking
+db.Degree_Programs.aggregate([ { $group: { _id: "$degree_summary_name" } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	student_transcripts_tracking
+db.Departments.aggregate([ { $match: { department_name: "engineer" } }, { $lookup: { from: "Degree_Programs", localField: "department_id", foreignField: "department_id", as: "degree_programs" } }, { $project: { count: { $size: "$degree_programs" } } }])	student_transcripts_tracking
+db.Departments.aggregate([ { $match: { department_name: "engineer" } }, { $lookup: { from: "Degree_Programs", localField: "department_id", foreignField: "department_id", as: "degree_programs" } }, { $project: { count: { $size: "$degree_programs" } } }])	student_transcripts_tracking
+db.Sections.find({}, {section_name: 1, section_description: 1})	student_transcripts_tracking
+db.Sections.find({}, {section_name: 1, section_description: 1})	student_transcripts_tracking
+db.Sections.aggregate([ { $group: { _id: "$course_id", count: { $sum: 1 } } }, { $match: { count: { $lte: 2 } } }, { $lookup: { from: "Courses", localField: "_id", foreignField: "course_id", as: "courseInfo" } }, { $unwind: "$courseInfo" }, { $project: { course_name: "$courseInfo.course_name", course_id: "$_id" } } ])	student_transcripts_tracking
+db.Sections.find({}, { section_name: 1}).sort({section_name: -1})	student_transcripts_tracking
+db.Sections.find({}, {section_name: 1}).sort({section_name: -1})	student_transcripts_tracking
+db.Semesters.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "semester_id", foreignField: "semester_id", as: "enrollments" } }, { $project: { semester_name: 1, semester_id: 1 } }, { $sort: { count: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Semesters.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "semester_id", foreignField: "semester_id", as: "student_enrolment" } }, { $project: { semester_name: 1, semester_id: 1 } }, { $sort: { student_count: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Departments.find( { department_name: { $regex: /computer/ } }, { department_description: 1 })	student_transcripts_tracking
+db.Departments.find( { department_name: { $regex: /computer/ } }, { department_description: 1 })	student_transcripts_tracking
+db.Students.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "student_id", foreignField: "student_id", as: "enrolments" } }, { $project: { first_name: 1, middle_name: 1, last_name: 1, student_id: 1, num_enrolments: { $size: "$enrolments" } } }, { $match: { num_enrolments: 2 } }, { $project: { first_name: 1, middle_name: 1, last_name: 1, student_id: 1 } } ])	student_transcripts_tracking
+db.Students.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "student_id", foreignField: "student_id", as: "enrollments" } }, { $match: { "enrollments": { $exists: true } } }, { $project: { first_name: 1, middle_name: 1, last_name: 1, student_id: 1} }, { $match: { enrollmentCount: 2 } }])	student_transcripts_tracking
+db.Students.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "student_id", foreignField: "student_id", as: "enrolment" } }, { $unwind: "$enrolment" }, { $lookup: { from: "Degree_Programs", localField: "enrolment.degree_program_id", foreignField: "degree_program_id", as: "degreeProgram" } }, { $unwind: "$degreeProgram" }, { $match: { "degreeProgram.degree_summary_name": "Bachelor" } }, { $group: { _id: { first_name: "$first_name", middle_name: "$middle_name", last_name: "$last_name" } } }, { $project: { first_name: "$_id.first_name", middle_name: "$_id.middle_name", last_name: "$_id.last_name" } } ])	student_transcripts_tracking
+db.Degree_Programs.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "degree_program_id", foreignField: "degree_program_id", as: "enrollments" } }, { $project: { degree_summary_name: 1 } }, { $sort: { enrollmentCount: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Degree_Programs.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "degree_program_id", foreignField: "degree_program_id", as: "enrollments" } }, { $project: { degree_summary_name: 1 } }, { $sort: { count: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Degree_Programs.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "degree_program_id", foreignField: "degree_program_id", as: "enrollment" } }, { $project: { degree_program_id: 1, degree_summary_name: 1 } }, { $sort: { count: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Degree_Programs.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "degree_program_id", foreignField: "degree_program_id", as: "enrollment" } }, { $project: { degree_program_id: 1, degree_summary_name: 1 } }, { $sort: { count: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Student_Enrolment.aggregate([ { $group: { _id: "$student_id", count: { $sum: 1 } }}, { $sort: { count: -1 }}, { $limit: 1 }, { $lookup: { from: "Students", localField: "_id", foreignField: "student_id", as: "student_info" }}, { $project: { _id: 1, first_name: { $arrayElemAt: ["$student_info.first_name", 0] }, middle_name: { $arrayElemAt: ["$student_info.middle_name", 0] }, last_name: { $arrayElemAt: ["$student_info.last_name", 0] }, count: 1 }} ])	student_transcripts_tracking
+db.Semesters.aggregate([ { $lookup: { from: "Student_Enrolment", localField: "semester_id", foreignField: "semester_id", as: "enrollment" } }, { $match: { "enrollment": { $size: 0 } } }, { $project: { semester_name: 1 } }])	student_transcripts_tracking
+db.Semesters.find( { semester_id: { $nin: db.Student_Enrolment.distinct("semester_id") } }, { semester_name: 1 })	student_transcripts_tracking
+db.Courses.aggregate([ { $lookup: { from: "Student_Enrolment_Courses", localField: "course_id", foreignField: "course_id", as: "enrollment" } }, { $match: { "enrollment.0": { $exists: true } } }, { $project: { course_name: 1 } }])	student_transcripts_tracking
+db.Students.findOne({first_name: 'Timmothy', last_name: 'Ward'}, {cell_mobile_number: 1})	student_transcripts_tracking
+db.Students.find({}, {first_name: 1, middle_name: 1, last_name: 1}).sort({date_first_registered: 1}).limit(1)	student_transcripts_tracking
+db.Students.find({}, {first_name: 1, middle_name: 1, last_name: 1}).sort({date_first_registered: 1}).limit(1)	student_transcripts_tracking
+db.Students.find({}, { first_name: 1, middle_name: 1, last_name: 1 }).sort({ date_left: 1 }).limit(1)	student_transcripts_tracking
+db.Students.find({}, {first_name: 1, middle_name: 1, last_name: 1}).sort({date_left: 1}).limit(1)	student_transcripts_tracking
+db.Students.aggregate([ { $lookup: { from: "Addresses", let: { current_address_id: "$current_address_id", permanent_address_id: "$permanent_address_id" }, pipeline: [ { $match: { $expr: { $and: [ { $eq: ["$address_id", "$$current_address_id"] }, { $ne: ["$address_id", "$$permanent_address_id"] } ] } } }, { $project: { address_id: 1 } } ], as: "addresses" } }, { $match: { "addresses.0": { $exists: true } } }, { $project: { first_name: 1 } }])	student_transcripts_tracking
+db.Students.find({ $expr: { $ne: ["$current_address_id", "$permanent_address_id"] } }, { first_name: 1 })	student_transcripts_tracking
+db.Addresses.aggregate([ { $lookup: { from: "Students", localField: "address_id", foreignField: "current_address_id", as: "students" } }, { $project: { address_id: 1, line_1: 1, line_2: 1 } }, { $sort: { count: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Addresses.aggregate([ { $lookup: { from: "Students", localField: "address_id", foreignField: "current_address_id", as: "students" } }, { $project: { address_id: 1, line_1: 1, line_2: 1} }, { $sort: { studentCount: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Transcript_Contents.aggregate([ { $group: { _id: "$student_course_id", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Transcript_Contents.aggregate([ { $group: { _id: "$student_course_id", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }])	student_transcripts_tracking
+db.Student_Enrolment.aggregate([ { $lookup: { from: "Degree_Programs", localField: "degree_program_id", foreignField: "degree_program_id", as: "degree_info" } }, { $unwind: "$degree_info" }, { $match: { "degree_info.degree_summary_name": { $in: ["Master", "Bachelor"] } } }, { $group: { _id: "$semester_id", degreeTypes: { $addToSet: "$degree_info.degree_summary_name" } } }, { $match: { degreeTypes: { $all: ["Master", "Bachelor"] } } }, { $project: { _id: 1 } } ])	student_transcripts_tracking
+db.Degree_Programs.aggregate([ { $match: { $or: [{ degree_summary_name: 'Master' }, { degree_summary_name: 'Bachelor' }] } }, { $lookup: { from: "Student_Enrolment", localField: "degree_program_id", foreignField: "degree_program_id", as: "enrolments" } }, { $unwind: "$enrolments" }, { $group: { _id: "$enrolments.semester_id", degreeTypes: { $addToSet: "$degree_summary_name" } } }, { $match: { degreeTypes: { $all: ['Master', 'Bachelor'] } } }, { $project: { semester_id: "$_id" } } ])	student_transcripts_tracking
+db.Students.find({}, { other_student_details: 1}).sort({other_student_details: -1})	student_transcripts_tracking
+db.Students.find({}, {other_student_details: 1}).sort({other_student_details: -1})	student_transcripts_tracking
+db.Sections.findOne({section_name: 'h'}, {section_description: 1})	student_transcripts_tracking
+db.Sections.findOne({section_name: 'h'}, {section_description: 1})	student_transcripts_tracking
+db.Students.find( { $or: [ {"permanent_address_id.country": "Haiti"}, {cell_mobile_number: "09700166582"} ] }, {first_name: 1} )	student_transcripts_tracking
+db.Cartoon.find({}, {Title: 1}).sort({Title: 1})	tvshow
+db.Cartoon.find({}, { Title: 1}).sort({Title: 1})	tvshow
+db.Cartoon.find({Directed_by: 'Ben Jones'}, {Title: 1})	tvshow
+db.Cartoon.find({Directed_by: 'Ben Jones'}, {Title: 1})	tvshow
+db.Cartoon.find({}, { Title: 1, Directed_by: 1 }).sort({ Original_air_date: 1 })	tvshow
+db.Cartoon.find({}, { Title: 1, Directed_by: 1 }).sort({ Original_air_date: 1 })	tvshow
+db.Cartoon.find( { Directed_by: { $in: ['Ben Jones', 'Brandon Vietti'] } }, { Title: 1 })	tvshow
+db.Cartoon.find( { Directed_by: { $in: ['Ben Jones', 'Brandon Vietti'] } }, { Title: 1 })	tvshow
+db.TV_Channel.aggregate([ { $group: { _id: "$Country", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Country: "$_id", count: 1 } }])	tvshow
+db.TV_Channel.aggregate([ { $group: { _id: "$Country", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Country: "$_id", count: 1 } }])	tvshow
+db.TV_Channel.aggregate([ { $group: { _id: null, uniqueSeriesNames: { $addToSet: "$series_name" }, uniqueContents: { $addToSet: "$Content" } } }, { $project: { uniqueSeriesNamesCount: { $size: "$uniqueSeriesNames" }, uniqueContentsCount: { $size: "$uniqueContents" } } }])	tvshow
+db.TV_Channel.aggregate([ { $group: { _id: null, series_count: { $addToSet: "$series_name" }, content_count: { $addToSet: "$Content" } } }, { $project: { series_count: { $size: "$series_count" }, content_count: { $size: "$content_count" } } }])	tvshow
+db.TV_Channel.find({series_name: 'Sky Radio'}, {Content: 1})	tvshow
+db.TV_Channel.find({series_name: 'Sky Radio'}, { Content: 1})	tvshow
+db.TV_Channel.find( {series_name: 'Sky Radio'}, { Package_Option: 1})	tvshow
+db.TV_Channel.find({series_name: 'Sky Radio'}, { Package_Option: 1})	tvshow
+db.TV_Channel.aggregate([ { $group: { _id: "$Language", count: { $sum: 1 } } }, { $sort: { count: 1 } }, { $limit: 1 }, { $project: { Language: "$_id", count: 1 } }])	tvshow
+db.TV_Channel.aggregate([ { $group: { _id: "$Language", count: { $sum: 1 } } }, { $sort: { count: 1 } }, { $limit: 1 }])	tvshow
+db.TV_Channel.aggregate([ { $group: { _id: "$Language", count: { $sum: 1 } } }, { $project: { Language: "$_id", count: 1 } }])	tvshow
+db.TV_Channel.aggregate([ { $group: { _id: "$Language", count: { $sum: 1 } } }, { $project: { Language: "$_id", count: 1 } }])	tvshow
+db.TV_Channel.aggregate([ { $lookup: { from: "Cartoon", localField: "id", foreignField: "Channel", as: "cartoon_info" } }, { $match: { "cartoon_info.Title": "The Rise of the Blue Beetle!" } }, { $project: { series_name: 1 } }])	tvshow
+db.TV_Channel.aggregate([ { $lookup: { from: "Cartoon", localField: "id", foreignField: "Channel", as: "cartoon_info" } }, { $match: { "cartoon_info.Title": "The Rise of the Blue Beetle!" } }, { $project: { series_name: 1 } }])	tvshow
+db.TV_Channel.aggregate([ { $match: { series_name: 'Sky Radio' } }, { $lookup: { from: 'Cartoon', localField: 'id', foreignField: 'Channel', as: 'cartoons' } }, { $unwind: '$cartoons' }, { $project: { 'Title': '$cartoons.Title' } } ])	tvshow
+db.TV_Channel.aggregate([ { $match: { series_name: "Sky Radio" } }, { $lookup: { from: "Cartoon", localField: "id", foreignField: "Channel", as: "cartoon_data" } }, { $unwind: "$cartoon_data" }, { $project: { Title: "$cartoon_data.Title" } }])	tvshow
+db.TV_series.aggregate([ { $lookup: { from: "TV_Channel", localField: "Channel", foreignField: "id", as: "channel_info" } }, { $unwind: "$channel_info" }, { $project: { Episode: 1 }}, { $sort: { Rating: 1 } }])	tvshow
+db.TV_series.find({}, {Episode: 1}).sort({Rating: 1})	tvshow
+db.TV_series.aggregate([ { $sort: { Rating: -1 } }, { $project: { Episode: 1, Rating: 1 } }, { $limit: 3 }])	tvshow
+db.TV_series.find({}, {Episode: 1, Rating: 1}).sort({Rating: -1}).limit(3)	tvshow
+db.TV_series.aggregate([ { $group: { _id: null, maxShare: { $max: "$Share" }, minShare: { $min: "$Share" } } }, { $project: { maxShare: 1, minShare: 1 } }])	tvshow
+db.TV_series.aggregate([ { $group: { _id: null, maxShare: { $max: "$Share" }, minShare: { $min: "$Share" } } }, { $project: { maxShare: 1, minShare: 1 } }])	tvshow
+db.TV_series.find({Episode: 'A Love of a Lifetime'}, {Air_Date: 1})	tvshow
+db.TV_series.findOne({Episode: 'A Love of a Lifetime'}, {Air_Date: 1})	tvshow
+db.TV_series.findOne({Episode: 'A Love of a Lifetime'}, {Weekly_Rank: 1})	tvshow
+db.TV_series.findOne({Episode: 'A Love of a Lifetime'}, {Weekly_Rank: 1})	tvshow
+db.TV_series.aggregate([ { $match: { Episode: 'A Love of a Lifetime' } }, { $lookup: { from: "TV_Channel", localField: "Channel", foreignField: "id", as: "channel_info" } }, { $unwind: "$channel_info" }, { $project: { series_name: "$channel_info.series_name" } } ])	tvshow
+db.TV_Channel.aggregate([ { $lookup: { from: "TV_series", localField: "id", foreignField: "Channel", as: "tv_series" } }, { $match: { "tv_series.Episode": "A Love of a Lifetime" } }, { $project: { series_name: 1 }}])	tvshow
+db.TV_series.aggregate([ { $lookup: { from: "TV_Channel", localField: "Channel", foreignField: "id", as: "channel" } }, { $match: { "channel.series_name": "Sky Radio" } }, { $project: { Episode: 1 } } ])	tvshow
+db.TV_Channel.aggregate([ { $match: { series_name: "Sky Radio" } }, { $lookup: { from: "TV_series", localField: "id", foreignField: "Channel", as: "tv_series" } }, { $unwind: "$tv_series" }, { $project: { episode: "$tv_series.Episode" } }])	tvshow
+db.Cartoon.aggregate([ { $group: { _id: "$Directed_by", count: { $sum: 1 } }} ])	tvshow
+db.Cartoon.aggregate([ { $group: { _id: "$Directed_by", count: { $sum: 1 } }} ])	tvshow
+db.TV_Channel.find({ Hight_definition_TV: 'yes' }, { Package_Option: 1, series_name: 1 })	tvshow
+db.TV_Channel.find({ Hight_definition_TV: "yes" }, { Package_Option: 1, series_name: 1 })	tvshow
+db.Cartoon.aggregate([ { $match: { Written_by: 'Todd Casey' } }, { $lookup: { from: "TV_Channel", localField: "Channel", foreignField: "id", as: "channel_info" } }, { $unwind: "$channel_info" }, { $project: { country: "$channel_info.Country" } }, { $group: { _id: "$country" } }, { $project: { country: "$_id" } } ])	tvshow
+db.TV_Channel.aggregate([ { $lookup: { from: "Cartoon", localField: "id", foreignField: "Channel", as: "cartoons" } }, { $unwind: "$cartoons" }, { $match: { $or: [ { "cartoons.Directed_by": "Ben Jones" }, { "cartoons.Directed_by": "Michael Chang" } ] } }, { $group: { _id: { series_name: "$series_name", country: "$Country" }, directors: { $addToSet: "$cartoons.Directed_by" } } }, { $match: { directors: { $all: ["Ben Jones", "Michael Chang"] } } }, { $project: { series_name: "$_id.series_name", country: "$_id.country" } } ])	tvshow
+db.TV_Channel.aggregate([ { $lookup: { from: "Cartoon", localField: "id", foreignField: "Channel", as: "cartoon" } }, { $match: { "cartoon": { $not: { $elemMatch: { "Directed_by": "Ben Jones" } } } } }, { $project: { id: 1 } } ])	tvshow
+db.TV_Channel.aggregate([ { $lookup: { from: "Cartoon", localField: "id", foreignField: "Channel", as: "Cartoon" } }, { $match: { "Cartoon": { $not: { $elemMatch: { Directed_by: "Ben Jones" } } } } }, { $project: { id: 1 } } ])	tvshow
+db.TV_Channel.aggregate([ { $lookup: { from: "Cartoon", localField: "id", foreignField: "Channel", as: "Cartoons" } }, { $match: { "Cartoons.Directed_by": { $ne: "Ben Jones" } } }, { $project: { Package_Option: 1 } } ])	tvshow
+db.TV_Channel.aggregate([ { $lookup: { from: "Cartoon", localField: "id", foreignField: "Channel", as: "cartoons" } }, { $match: { "cartoons": { $not: { $elemMatch: { "Directed_by": "Ben Jones" } } } } }, { $project: { "Package_Option": 1 } } ])	tvshow
+db.poker_player.find({}, {Earnings: 1}).sort({Earnings: -1})	poker_player
+db.poker_player.aggregate([ { $sort: { Earnings: -1 } }, { $project: { Earnings: 1 } }])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "player_info" } }, { $project: { Final_Table_Made: 1, Best_Finish: 1 } }])	poker_player
+db.poker_player.find({}, {Final_Table_Made: 1, Best_Finish: 1})	poker_player
+db.poker_player.aggregate([ { $group: { _id: null, averageEarnings: { $avg: "$Earnings" } } }, { $project: { averageEarnings: 1 } }])	poker_player
+db.poker_player.aggregate([ { $group: { _id: null, averageEarnings: { $avg: "$Earnings" } } }, { $project: { averageEarnings: 1 } }])	poker_player
+db.poker_player.aggregate([ { $sort: { Earnings: -1 } }, { $limit: 1 }, { $project: { Money_Rank: 1 } }])	poker_player
+db.poker_player.aggregate([ { $sort: { Earnings: -1 } }, { $limit: 1 }, { $project: { Money_Rank: 1 } }])	poker_player
+db.poker_player.aggregate([ { $match: { Earnings: { $lt: 200000 } } }, { $group: { _id: null, maxFinalTables: { $max: "$Final_Table_Made" } } }, { $project: { maxFinalTables: 1 } }])	poker_player
+db.poker_player.aggregate([ { $match: { Earnings: { $lt: 200000 } } }, { $group: { _id: null, maxFinalTableMade: { $max: "$Final_Table_Made" } } }, { $project: { maxFinalTableMade: 1 } }])	poker_player
+db.people.aggregate([ { $lookup: { from: "poker_player", localField: "People_ID", foreignField: "People_ID", as: "player_info" } }, { $match: { "player_info": { $ne: [] } } }, { $project: { "Name": 1, "_id": 0 } } ])	poker_player
+db.people.aggregate([ { $lookup: { from: "poker_player", localField: "People_ID", foreignField: "People_ID", as: "poker_player_info" } }, { $unwind: "$poker_player_info" }, { $project: { Name: 1 } }])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "player_info" } }, { $unwind: "$player_info" }, { $match: { Earnings: { $gt: 300000 } } }, { $project: { Name: "$player_info.Name" } }])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "player_info" } }, { $unwind: "$player_info" }, { $match: { Earnings: { $gt: 300000 } } }, { $project: { Name: "$player_info.Name" } }])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "player_info" } }, { $unwind: "$player_info" }, { $project: { Name: "$player_info.Name"} }, { $sort: { Final_Table_Made: 1 } }])	poker_player
+db.people.aggregate([ { $lookup: { from: "poker_player", localField: "People_ID", foreignField: "People_ID", as: "poker_player_info" } }, { $unwind: "$poker_player_info" }, { $sort: { "poker_player_info.Final_Table_Made": 1 } }, { $project: { Name: 1 } }])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "player_info" } }, { $unwind: "$player_info" }, { $sort: { "Earnings": 1 } }, { $limit: 1 }, { $project: { "Birth_Date": "$player_info.Birth_Date" } }])	poker_player
+db.people.aggregate([ { $sort: { Height: -1 } }, { $limit: 1 }, { $lookup: { from: "poker_player", localField: "People_ID", foreignField: "People_ID", as: "poker_info" } }, { $unwind: "$poker_info" }, { $project: { Money_Rank: "$poker_info.Money_Rank" } } ])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "player_details" } }, { $sort: { "player_details.Height": -1} }, { $limit: 1 }, { $project: { "Money_Rank": 1 } } ])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "player_info" } }, { $unwind: "$player_info" }, { $match: { "player_info.Height": { $gt: 200 } } }, { $group: { _id: null, averageEarnings: { $avg: "$Earnings" } } }, { $project: { averageEarnings: 1 } }])	poker_player
+db.people.aggregate([ { $match: { Height: { $gt: 200 } } }, { $lookup: { from: "poker_player", localField: "People_ID", foreignField: "People_ID", as: "poker_player_data" } }, { $unwind: "$poker_player_data" }, { $group: { _id: null, avgEarnings: { $avg: "$poker_player_data.Earnings" } } }, { $project: { avgEarnings: 1 } } ])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "player_info" } }, { $unwind: "$player_info" }, { $project: { Name: "$player_info.Name" } }, { $sort: { Earnings: -1 } }])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "player_info" } }, { $unwind: "$player_info" }, { $project: { Name: "$player_info.Name" } }, { $sort: { Earnings: -1 } }])	poker_player
+db.people.aggregate([ { $group: { _id: "$Nationality", NumberOfPeople: { $sum: 1 } } }, { $project: { Nationality: "$_id", NumberOfPeople: 1 } } ])	poker_player
+db.people.aggregate([ { $group: { _id: "$Nationality", count: { $sum: 1 } } }])	poker_player
+db.poker_player.aggregate([ { $lookup: { from: "people", localField: "People_ID", foreignField: "People_ID", as: "people_info" } }, { $unwind: "$people_info" }, { $group: { _id: "$people_info.Nationality", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Nationality: "$_id" } }])	poker_player
+db.people.aggregate([ { $group: { _id: "$Nationality", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Nationality: "$_id" } }])	poker_player
+db.people.aggregate([ { $group: { _id: "$Nationality", count: { $sum: 1 } } }, { $match: { count: { $gte: 2 } } }, { $project: { Nationality: "$_id" } }])	poker_player
+db.people.aggregate([ { $group: { _id: "$Nationality", count: { $sum: 1 } } }, { $match: { count: { $gte: 2 } } }, { $project: { Nationality: "$_id" } }])	poker_player
+db.people.find({}, {Name: 1, Birth_Date: 1}).sort({Name: 1})	poker_player
+db.people.find({}, {Name: 1, Birth_Date: 1}).sort({Name: 1})	poker_player
+db.people.find({ Nationality: { $ne: 'Russia' } }, { Name: 1 })	poker_player
+db.people.find( { Nationality: { $ne: 'Russia' } }, { Name: 1 })	poker_player
+db.people.aggregate([ { $lookup: { from: "poker_player", localField: "People_ID", foreignField: "People_ID", as: "poker_info" } }, { $match: { "poker_info": { $size: 0 } } }, { $project: { Name: 1 } } ])	poker_player
+db.people.aggregate([ { $lookup: { from: "poker_player", localField: "People_ID", foreignField: "People_ID", as: "poker_info" } }, { $match: { "poker_info": { $size: 0 } } }, { $project: { Name: 1 } } ])	poker_player
+db.CONTESTANTS.find({}, { contestant_number: 1, contestant_name: 1 }).sort({ contestant_name: -1 })	voter_1
+db.VOTES.find({}, { vote_id: 1, phone_number: 1, state: 1 })	voter_1
+db.AREA_CODE_STATE.aggregate([ { $group: { _id: null, maxAreaCode: { $max: "$area_code" }, minAreaCode: { $min: "$area_code" } } }, { $project: { maxAreaCode: 1, minAreaCode: 1 } }])	voter_1
+db.CONTESTANTS.find({ contestant_name: {$ne: 'Jessie Alloway'} }, { contestant_name: 1 })	voter_1
+db.VOTES.aggregate([ { $group: { _id: "$contestant_number", voteCount: { $sum: 1 } }}, { $match: { voteCount: { $gte: 2 } }}, { $lookup: { from: "CONTESTANTS", localField: "_id", foreignField: "contestant_number", as: "contestant_info" }}, { $unwind: "$contestant_info" }, { $project: { contestant_number: "$_id", contestant_name: "$contestant_info.contestant_name" }} ])	voter_1
+db.VOTES.aggregate([ { $group: { _id: "$contestant_number", voteCount: { $sum: 1 } } }, { $sort: { voteCount: 1 } }, { $limit: 1 }, { $lookup: { from: "CONTESTANTS", localField: "_id", foreignField: "contestant_number", as: "contestantInfo" } }, { $project: { contestant_number: "$_id", contestant_name: { $arrayElemAt: ["$contestantInfo.contestant_name", 0] } } } ])	voter_1
+db.VOTES.aggregate([ { $match: { state: { $in: ['NY', 'CA'] } } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } } ])	voter_1
+db.CONTESTANTS.aggregate([ { $lookup: { from: "VOTES", localField: "contestant_number", foreignField: "contestant_number", as: "contestant_votes" } }, { $match: { contestant_votes: { $size: 0 } } }, { $count: "contestants_without_votes" } ])	voter_1
+db.VOTES.aggregate([ { $group: { _id: "$state", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $lookup: { from: "AREA_CODE_STATE", localField: "_id", foreignField: "state", as: "area_code_info" } }, { $project: { area_code: { $arrayElemAt: [ "$area_code_info.area_code", 0 ] } } } ])	voter_1
+db.CONTESTANTS.find({ contestant_name: /Al/i }, { contestant_name: 1 })	voter_1
+db.country.aggregate([ { $match: { Region: "Caribbean" } }, { $group: { _id: null, totalSurfaceArea: { $sum: "$SurfaceArea" } } }, { $project: { totalSurfaceArea: 1 } }])	world_1
+db.country.aggregate([ { $match: { Region: "Caribbean" } }, { $group: { _id: null, totalSurfaceArea: { $sum: "$SurfaceArea" } } }, { $project: { totalSurfaceArea: 1 } }])	world_1
+db.country.find({Name: 'Anguilla'}, {Continent: 1})	world_1
+db.country.find({Name: 'Anguilla'}, {Continent: 1})	world_1
+db.country.aggregate([ { $lookup: { from: "city", localField: "Code", foreignField: "CountryCode", as: "city_info" } }, { $match: { "city_info.Name": "Kabul" } }, { $project: { "_id": 0, "Region": 1 } }])	world_1
+db.country.aggregate([ { $match: { Name: "Aruba" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $unwind: "$languages" }, { $sort: { "languages.Percentage": -1 } }, { $limit: 1 }, { $project: { Language: "$languages.Language" } }])	world_1
+db.country.aggregate([ { $match: { Name: "Aruba" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $unwind: "$languages" }, { $sort: { "languages.Percentage": -1 } }, { $limit: 1 }, { $project: { Language: "$languages.Language" } }])	world_1
+db.country.find( { Name: 'Brazil' }, { Population: 1, LifeExpectancy: 1 })	world_1
+db.country.find({Name: 'Brazil'}, {Population: 1, LifeExpectancy: 1})	world_1
+db.country.find( { Name: 'Angola' }, { Population: 1, Region: 1 })	world_1
+db.country.find({Name: 'Angola'}, {Population: 1, Region: 1})	world_1
+db.country.aggregate([ { $match: { Region: "Central Africa" } }, { $group: { _id: null, avgLifeExpectancy: { $avg: "$LifeExpectancy" } } }, { $project: { avgLifeExpectancy: 1 } }])	world_1
+db.country.aggregate([ { $match: { Region: "Central Africa" } }, { $group: { _id: null, avgLifeExpectancy: { $avg: "$LifeExpectancy" } } }, { $project: { avgLifeExpectancy: 1 } }])	world_1
+db.country.find( { Continent: 'Asia' }, { Name: 1 }).sort({ LifeExpectancy: 1 }).limit(1)	world_1
+db.country.find({Continent: 'Asia'}, {Name: 1}).sort({LifeExpectancy: 1}).limit(1)	world_1
+db.country.aggregate([ { $match: { Continent: "Asia" } }, { $group: { _id: null, totalPopulation: { $sum: "$Population" }, maxGNP: { $max: "$GNP" } }}, { $project: { totalPopulation: 1, maxGNP:1 } }])	world_1
+db.country.aggregate([ { $match: { Continent: "Asia" } }, { $group: { _id: null, totalPopulation: { $sum: "$Population" }, maxGNP: { $max: "$GNP" } } }, { $project: { totalPopulation: 1, maxGNP: 1 } }])	world_1
+db.country.aggregate([ { $match: { $or: [ { Continent: 'Asia' }, { Continent: 'Europe' } ] } }, { $group: { _id: null, totalSurfaceArea: { $sum: "$SurfaceArea" } } }, { $project: { totalSurfaceArea: 1 } }])	world_1
+db.country.aggregate([ { $match: { $or: [ { Continent: 'Asia' }, { Continent: 'Europe' } ] } }, { $group: { _id: null, totalSurfaceArea: { $sum: "$SurfaceArea" } } }, { $project: { totalSurfaceArea: 1 } }])	world_1
+db.city.aggregate([ { $match: { District: 'Gelderland' } }, { $group: { _id: null, totalPopulation: { $sum: '$Population' } } }, { $project: { totalPopulation: 1 } }])	world_1
+db.city.aggregate([ { $match: { District: 'Gelderland' } }, { $group: { _id: null, totalPopulation: { $sum: '$Population' } } }, { $project: { totalPopulation: 1 } }])	world_1
+db.country.aggregate([ { $match: { GovernmentForm: "US Territory" } }, { $group: { _id: null, avgGNP: { $avg: "$GNP" }, totalPopulation: { $sum: "$Population" } }}, { $project: { totalPopulation: 1, avgGNP: 1 } }])	world_1
+db.country.aggregate([ { $match: { GovernmentForm: "US Territory" } }, { $group: { _id: null, avgGNP: { $avg: "$GNP" }, totalPopulation: { $sum: "$Population" } }}, { $project: { totalPopulation: 1, avgGNP: 1 } }])	world_1
+db.country.aggregate([ { $match: { Continent: "Africa" } }, { $group: { _id: "$GovernmentForm" } }, { $count: "distinct_government_forms" } ])	world_1
+db.country.aggregate([ { $match: { Continent: "Africa" } }, { $group: { _id: "$GovernmentForm" } }, { $count: "distinctGovernmentForms" } ])	world_1
+db.country.aggregate([ { $match: { Name: "Aruba" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $project: { languages: { $size: "$languages" } } }])	world_1
+db.country.aggregate([ { $match: { Name: "Aruba" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $project: { languages: { $size: "$languages" } } }])	world_1
+db.country.aggregate([ { $match: { Name: "Afghanistan" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $unwind: "$languages" }, { $match: { "languages.IsOfficial": "T" } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	world_1
+db.country.aggregate([ { $match: { Name: "Afghanistan" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $unwind: "$languages" }, { $match: { "languages.IsOfficial": "T" } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $group: { _id: "$Continent", languageCount: { $sum: 1 } } }, { $sort: { languageCount: -1 } }, { $limit: 1 }, { $project: { Continent: "$_id"} }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $group: { _id: "$Continent", languageCount: { $sum: 1 } } }, { $sort: { languageCount: -1 } }, { $limit: 1 }, { $project: { Continent: "$_id"} }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages.Language": { $all: ["English", "Dutch"] } } }, { $count: "count" }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages.Language": { $all: ["English", "Dutch"] } } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages.Language": { $all: ["English", "French"] } } }, { $project: { Name: 1 } }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages.Language": { $all: ["English", "French"] } } }, { $project: { Name: 1 } }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages": { $elemMatch: { "Language": "English", "IsOfficial": "T" } } } }, { $match: { "languages": { $elemMatch: { "Language": "French", "IsOfficial": "T" } } } }, { $project: { "Name": 1, "_id": 0 } } ])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages.Language": "Chinese" } }, { $group: { _id: "$Continent" } }, { $count: "distinct_continents" } ])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages.Language": "Chinese" } }, { $group: { _id: "$Continent" } }, { $count: "distinct_continents" } ])	world_1
+db.country.aggregate([ { $match: { "Code": { $in: db.countrylanguage.distinct("CountryCode", { Language: { $in: ["English", "Dutch"] } }) } } }, { $group: { _id: "$Region" } }, { $project: { Region: "$_id" } }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages.Language": { $in: ["Dutch", "English"] } } }, { $group: { _id: "$Region" } }, { $project: { Region: "$_id" } } ])	world_1
+db.country.aggregate([ { $match: { Continent: "Asia" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $unwind: "$languages" }, { $group: { _id: "$languages.Language", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { _id: 1 } }])	world_1
+db.country.aggregate([ { $match: { Continent: "Asia" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $unwind: "$languages" }, { $group: { _id: "$languages.Language", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { _id: 1 } }])	world_1
+db.city.aggregate([ { $lookup: { from: "countrylanguage", localField: "CountryCode", foreignField: "CountryCode", as: "country_language" } }, { $match: { "country_language.Language": "English" } }, { $sort: { Population: -1 } }, { $limit: 1 }, { $project: { Name: 1, Population: 1 } }])	world_1
+db.city.aggregate([ { $lookup: { from: "countrylanguage", localField: "CountryCode", foreignField: "CountryCode", as: "country_info" } }, { $unwind: "$country_info" }, { $match: { "country_info.Language": "English" } }, { $sort: { Population: -1 } }, { $limit: 1 }, { $project: { Name: 1, Population: 1 } }])	world_1
+db.country.find( { Continent: 'Asia' }, { Name: 1, Population: 1, LifeExpectancy: 1 }).sort({ SurfaceArea: -1 }).limit(1)	world_1
+db.country.find( { Continent: "Asia" }, { Name: 1, Population: 1, LifeExpectancy: 1 }).sort({ SurfaceArea: -1 }).limit(1)	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages.Language": { $ne: "English" } } }, { $group: { _id: null, totalPopulation: { $sum: "$Population" } } }, { $project: { totalPopulation: 1 } }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "languages.Language": { $ne: "English" } } }, { $group: { _id: null, totalPopulation: { $sum: "$Population" } } }, { $project: { totalPopulation: 1 } }])	world_1
+db.country.aggregate([ { $match: { HeadOfState: "Beatrix" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $unwind: "$languages" }, { $match: { "languages.IsOfficial": "T" } }, { $project: { Language: "$languages.Language" } }])	world_1
+db.country.aggregate([ { $match: { HeadOfState: "Beatrix" } }, { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "country_language" } }, { $unwind: "$country_language" }, { $match: { "country_language.IsOfficial": "T" } }, { $project: { Language: "$country_language.Language" } }])	world_1
+db.country.aggregate([ { $lookup: { from: "countrylanguage", localField: "Code", foreignField: "CountryCode", as: "languages" } }, { $match: { "IndepYear": { $lt: 1930 } } }, { $unwind: "$languages" }, { $match: { "languages.IsOfficial": "T" } }, { $group: { _id: null, distinctLanguages: { $addToSet: "$languages.Language" } } }, { $project: { totalDistinctLanguages: { $size: "$distinctLanguages" } } }])	world_1
+db.country.find( { Continent: 'Africa', Population: { $lt: db.country.aggregate([ { $match: { Continent: 'Asia' } }, { $group: { _id: null, minPopulation: { $min: '$Population' } } } ]).toArray()[0].minPopulation } }, { Name: 1 })	world_1
+db.country.find({}, {Name: 1, Population: 1, HeadOfState: 1}).sort({SurfaceArea: -1}).limit(1)	world_1
+db.country.find({}, {Name: 1, Population: 1, HeadOfState: 1}).sort({SurfaceArea: -1}).limit(1)	world_1
+db.country.aggregate([ { $group: { _id: "$GovernmentForm", totalPopulation: { $sum: "$Population" }, avgLifeExpectancy: { $avg: "$LifeExpectancy" } } }, { $match: { avgLifeExpectancy: { $gt: 72 } } }, { $project: { GovernmentForm: "$_id", totalPopulation: 1 } }])	world_1
+db.country.find({}, {Name: 1, SurfaceArea: 1}).sort({SurfaceArea: -1}).limit(5)	world_1
+db.country.find({}, {Name: 1, SurfaceArea: 1}).sort({SurfaceArea: -1}).limit(5)	world_1
+db.country.find({}, {Name: 1}).sort({Population: -1}).limit(3)	world_1
+db.country.find({}, {Name: 1}).sort({Population: -1}).limit(3)	world_1
+db.country.find({}, { Name: 1}).sort({Population: 1}).limit(3)	world_1
+db.country.find({}, { Name: 1}).sort({Population: 1}).limit(3)	world_1
+db.countrylanguage.aggregate([ { $group: { _id: "$Language", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Language: "$_id" } }])	world_1
+db.countrylanguage.aggregate([ { $group: { _id: "$Language", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Language: "$_id" } }])	world_1
+db.conductor.find({}, {Name: 1}).sort({Age: 1})	orchestra
+db.conductor.find({}, {Name: 1}).sort({Age: 1})	orchestra
+db.conductor.find({Nationality: {$ne: 'USA'}}, {Name: 1})	orchestra
+db.conductor.find({ Nationality: { $ne: 'USA' } }, { Name: 1 })	orchestra
+db.orchestra.find({}, {Record_Company: 1}).sort({Year_of_Founded: -1})	orchestra
+db.orchestra.find({}, {Record_Company: 1}).sort({Year_of_Founded: -1})	orchestra
+db.show.aggregate([ { $group: { _id: null, averageAttendance: { $avg: "$Attendance" } } }, { $project: { averageAttendance: 1 } }])	orchestra
+db.show.aggregate([ { $group: { _id: null, averageAttendance: { $avg: "$Attendance" } } }, { $project: { averageAttendance: 1 } }])	orchestra
+db.performance.aggregate([ { $match: { Type: { $ne: "Live final" } } }, { $group: { _id: null, maxShare: { $max: "$Share" }, minShare: { $min: "$Share" } } }, { $project: { maxShare: 1, minShare: 1 } } ])	orchestra
+db.performance.aggregate([ { $match: { Type: { $ne: 'Live final' } } }, { $group: { _id: null, maxShare: { $max: "$Share" }, minShare: { $min: "$Share" } } }, { $project: { maxShare: 1, minShare: 1 } } ])	orchestra
+db.conductor.find({}, {Name: 1}).sort({Year_of_Work: -1})	orchestra
+db.conductor.find({}, {Name: 1}).sort({Year_of_Work: -1})	orchestra
+db.conductor.find({}, {Name: 1}).sort({Year_of_Work: -1}).limit(1)	orchestra
+db.conductor.find({}, {Name: 1}).sort({Year_of_Work: -1}).limit(1)	orchestra
+db.conductor.aggregate([ { $lookup: { from: "orchestra", localField: "Conductor_ID", foreignField: "Conductor_ID", as: "orchestras" } }, { $unwind: "$orchestras" }, { $project: { Name: 1, Orchestra: "$orchestras.Orchestra" } } ])	orchestra
+db.conductor.aggregate([ { $lookup: { from: "orchestra", localField: "Conductor_ID", foreignField: "Conductor_ID", as: "orchestras" } }, { $unwind: "$orchestras" }, { $project: { "Name": 1, "Orchestra": "$orchestras.Orchestra" } } ])	orchestra
+db.conductor.aggregate([ { $lookup: { from: "orchestra", localField: "Conductor_ID", foreignField: "Conductor_ID", as: "orchestra_info" } }, { $match: { "orchestra_info.Year_of_Founded": { $gt: 2008 } } }, { $project: { Name: 1 } }])	orchestra
+db.conductor.aggregate([ { $lookup: { from: "orchestra", localField: "Conductor_ID", foreignField: "Conductor_ID", as: "orchestra_info" } }, { $unwind: "$orchestra_info" }, { $match: { "orchestra_info.Year_of_Founded": { $gt: 2008 } } }, { $project: { Name: 1 } }])	orchestra
+db.orchestra.aggregate([ { $group: { _id: "$Record_Company", count: { $sum: 1 } } }])	orchestra
+db.orchestra.aggregate([ { $group: { _id: "$Record_Company", count: { $sum: 1 } } }])	orchestra
+db.orchestra.aggregate([ { $group: { _id: "$Major_Record_Format", count: { $sum: 1 } } }, { $sort: { count: 1 } }, { $project: { Major_Record_Format: "$_id"} }])	orchestra
+db.orchestra.aggregate([ { $group: { _id: "$Major_Record_Format", count: { $sum: 1 } } }, { $sort: { count: 1 } }, { $project: { Major_Record_Format: "$_id"} }])	orchestra
+db.orchestra.aggregate([ { $group: { _id: "$Record_Company", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Record_Company: "$_id" } }])	orchestra
+db.orchestra.aggregate([ { $group: { _id: "$Record_Company", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Record_Company: "$_id" } }])	orchestra
+db.orchestra.find( { Orchestra_ID: { $nin: db.performance.distinct("Orchestra_ID") } }, { Orchestra: 1 })	orchestra
+db.orchestra.find( { Orchestra_ID: { $nin: db.performance.distinct("Orchestra_ID") } }, { Orchestra: 1 })	orchestra
+db.orchestra.aggregate([ { $facet: { "before2003": [ { $match: { Year_of_Founded: { $lt: 2003 } } }, { $group: { _id: "$Record_Company" } } ], "after2003": [ { $match: { Year_of_Founded: { $gt: 2003 } } }, { $group: { _id: "$Record_Company" } } ] } }, { $project: { commonRecordCompanies: { $setIntersection: ["$before2003._id", "$after2003._id"] } } }, { $unwind: "$commonRecordCompanies" }, { $replaceRoot: { newRoot: { $arrayToObject: [[{ k: "Record_Company", v: "$commonRecordCompanies" }]] } } } ])	orchestra
+db.Highschooler.find({}, { name: 1, grade: 1})	network_1
+db.Highschooler.find({}, {name: 1, grade: 1})	network_1
+db.Highschooler.find({}, {grade: 1})	network_1
+db.Highschooler.find({}, {grade: 1})	network_1
+db.Highschooler.find({name: 'Kyle'}, { grade: 1})	network_1
+db.Highschooler.findOne({name: 'Kyle'}, {grade: 1})	network_1
+db.Highschooler.find({grade: 10}, {name: 1})	network_1
+db.Highschooler.find({grade: 10}, {name: 1})	network_1
+db.Highschooler.find({name: 'Kyle'}, { ID: 1})	network_1
+db.Highschooler.find({name: 'Kyle'}, { ID: 1})	network_1
+db.Highschooler.aggregate([ { $group: { _id: "$grade", count: { $sum: 1 } } }, { $project: { grade: "$_id", count: 1 } }])	network_1
+db.Highschooler.aggregate([ { $group: { _id: "$grade", count: { $sum: 1 } } }])	network_1
+db.Highschooler.aggregate([ { $group: { _id: "$grade", count: { $sum: 1 } } }, { $match: { count: { $gte: 4 } } }, { $project: { grade: "$_id" } }])	network_1
+db.Highschooler.aggregate([ { $group: { _id: "$grade", count: { $sum: 1 } } }, { $match: { count: { $gte: 4 } } }, { $project: { grade: "$_id" } }])	network_1
+db.Friend.aggregate([ { $group: { _id: "$student_id", count: { $sum: 1 } } }])	network_1
+db.Friend.aggregate([ { $group: { _id: "$student_id", count: { $sum: 1 } } }, { $project: { student_id: "$_id", count: 1 } }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "Friends" } }, { $project: { name: 1, numberOfFriends: { $size: "$Friends" } } }, { $sort: { numberOfFriends: -1 } }, { $limit: 1 }, { $project: { name: 1 } } ])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "Friends" } }, { $project: { name: 1, numberOfFriends: { $size: "$Friends" } } }, { $sort: { numberOfFriends: -1 } }, { $limit: 1 }, { $project: { name: 1 } } ])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { "friends": { $exists: true, $ne: [] } } }, { $addFields: { friendCount: { $size: "$friends" } } }, { $match: { friendCount: { $gte: 3 } } }, { $project: { name: 1 } }])	network_1
+db.Highschooler.aggregate([ { $match: { name: "Kyle" } }, { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $unwind: "$friends" }, { $lookup: { from: "Highschooler", localField: "friends.friend_id", foreignField: "ID", as: "friend_info" } }, { $unwind: "$friend_info" }, { $project: { name: "$friend_info.name" } }])	network_1
+db.Highschooler.aggregate([ { $match: { name: "Kyle" } }, { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $unwind: "$friends" }, { $lookup: { from: "Highschooler", localField: "friends.friend_id", foreignField: "ID", as: "friend_names" } }, { $unwind: "$friend_names" }, { $project: { name: "$friend_names.name" } } ])	network_1
+db.Friend.aggregate([ { $lookup: { from: "Highschooler", localField: "student_id", foreignField: "ID", as: "student_info" } }, { $match: { "student_info.name": "Kyle" } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	network_1
+db.Friend.aggregate([ { $lookup: { from: "Highschooler", localField: "student_id", foreignField: "ID", as: "student_info" } }, { $match: { "student_info.name": "Kyle" } }, { $count: "total" }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { "friends": { $size: 0 } } }, { $project: { ID: 1 } }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { friends: { $size: 0 } } }, { $project: { ID: 1 } }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { "friends": { $size: 0 } } }, { $project: { name: 1 } }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { "friends": { $size: 0 } } }, { $project: { name: 1 } }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $lookup: { from: "Likes", localField: "ID", foreignField: "liked_id", as: "liked_by" } }, { $match: { $and: [ { "friends.0": { $exists: true } }, { "liked_by.0": { $exists: true } } ] } }, { $project: { ID: 1 } } ])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $lookup: { from: "Likes", localField: "ID", foreignField: "liked_id", as: "likedBy" } }, { $match: { $expr: { $and: [ { $ne: [ { $size: "$friends" }, 0 ] }, { $ne: [ { $size: "$likedBy" }, 0 ] } ] } } }, { $project: { ID: 1 } } ])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $lookup: { from: "Likes", localField: "ID", foreignField: "liked_id", as: "liked_by" } }, { $match: { "friends.0": { $exists: true }, "liked_by.0": { $exists: true } } }, { $project: { name: 1 } } ])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "has_friends" } }, { $lookup: { from: "Likes", localField: "ID", foreignField: "liked_id", as: "is_liked" } }, { $match: { $and: [ { "has_friends.0": { $exists: true } }, { "is_liked.0": { $exists: true } } ] } }, { $project: { name: 1 } } ])	network_1
+db.Likes.aggregate([ { $group: { _id: "$student_id", count: { $sum: 1 } } }])	network_1
+db.Likes.aggregate([ { $group: { _id: "$student_id", count: { $sum: 1 } } }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Likes", localField: "ID", foreignField: "student_id", as: "likes_info" } }, { $match: { "likes_info": { $ne: [] } } }, { $project: { name: 1, number_of_likes: { $size: "$likes_info" } } } ])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Likes", localField: "ID", foreignField: "student_id", as: "likes_info" } }, { $match: { "likes_info": { $ne: [] } } }, { $project: { name: 1, likesCount: { $size: "$likes_info" } } } ])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { grade: { $gt: 5 } } }, { $addFields: { friendCount: { $size: "$friends" } } }, { $match: { friendCount: { $gte: 2 } } }, { $project: { name: 1 } }])	network_1
+db.Highschooler.aggregate([ { $match: { grade: { $gt: 5 } } }, { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $project: { name: 1, numberOfFriends: { $size: "$friends" } } }, { $match: { numberOfFriends: { $gte: 2 } } }, { $project: { name: 1 } } ])	network_1
+db.Likes.aggregate([ { $lookup: { from: "Highschooler", localField: "student_id", foreignField: "ID", as: "student" } }, { $match: { "student.name": "Kyle" } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } }])	network_1
+db.Highschooler.aggregate([ { $match: { name: "Kyle" } }, { $lookup: { from: "Likes", localField: "ID", foreignField: "student_id", as: "likes" }}, { $unwind: "$likes" }, { $count: "likes_count" } ])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { "friends.0": { $exists: true } } }, { $group: { _id: null, averageGrade: { $avg: "$grade" } } }, { $project: { averageGrade: 1 } }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { "friends.0": { $exists: true } } }, { $group: { _id: null, averageGrade: { $avg: "$grade" } } }, { $project: { averageGrade: 1 } }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { friends: { $size: 0 } } }, { $group: { _id: null, minGrade: { $min: "$grade" } } }, { $project: { minGrade: 1 } }])	network_1
+db.Highschooler.aggregate([ { $lookup: { from: "Friend", localField: "ID", foreignField: "student_id", as: "friends" } }, { $match: { friends: { $size: 0 } } }, { $group: { _id: null, minGrade: { $min: "$grade" } } }, { $project: { minGrade: 1 } }])	network_1
+db.Owners.aggregate([ { $group: { _id: "$state" } }, { $lookup: { from: "Professionals", localField: "_id", foreignField: "state", as: "professionals" } }, { $match: { professionals: { $ne: [] } } }, { $project: { state: "$_id" } }])	dog_kennels
+db.Owners.aggregate([ { $lookup: { from: "Professionals", localField: "state", foreignField: "state", as: "common_states" } }, { $match: { "common_states": { $ne: [] } } }, { $group: { _id: "$state" } }, { $project: { state: "$_id" } } ])	dog_kennels
+db.Professionals.aggregate([ { $match: { state: 'Indiana' } }, { $project: { professional_id: 1, last_name: 1, cell_number: 1 } }, { $unionWith: { coll: "Professionals", pipeline: [ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $project: { professional_id: 1, last_name: 1, cell_number: 1, treatmentCount: { $size: "$treatments" } } }, { $match: { treatmentCount: { $gt: 2 } } } ] } }, { $group: { _id: { professional_id: "$professional_id", last_name: "$last_name", cell_number: "$cell_number" } } }, { $project: { professional_id: "$_id.professional_id", last_name: "$_id.last_name", cell_number: "$_id.cell_number" } } ])	dog_kennels
+db.Dogs.aggregate([ { $lookup: { from: "Treatments", localField: "dog_id", foreignField: "dog_id", as: "treatments" } }, { $addFields: { totalCost: { $sum: "$treatments.cost_of_treatment" } } }, { $match: { totalCost: { $lte: 1000 } } }, { $project: { name: 1 } }])	dog_kennels
+db.Dogs.aggregate([ { $lookup: { from: "Treatments", localField: "dog_id", foreignField: "dog_id", as: "treatments" } }, { $addFields: { totalCost: { $sum: "$treatments.cost_of_treatment" } } }, { $match: { totalCost: { $lte: 1000 } } }, { $project: { name: 1 } }])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $match: { "treatments": { $size: 0 } } }, { $project: { "_id": 0, "professional_id": 1, "role_code": 1, "email_address": 1 } }])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $match: { "treatments": { $size: 0 } } }, { $project: { professional_id: 1, role_code: 1, email_address: 1 } }])	dog_kennels
+db.Dogs.aggregate([ { $lookup: { from: "Owners", localField: "owner_id", foreignField: "owner_id", as: "owner_info" } }, { $unwind: "$owner_info" }, { $group: { _id: "$owner_id", first_name: { $first: "$owner_info.first_name" }, last_name: { $first: "$owner_info.last_name" }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { owner_id: "$_id", first_name: 1, last_name: 1 } }])	dog_kennels
+db.Dogs.aggregate([ { $lookup: { from: "Owners", localField: "owner_id", foreignField: "owner_id", as: "owner_info" } }, { $unwind: "$owner_info" }, { $group: { _id: "$owner_id", first_name: { $first: "$owner_info.first_name" }, last_name: { $first: "$owner_info.last_name" }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { owner_id: "$_id", first_name: 1, last_name: 1 } }])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $project: { professional_id: 1, role_code: 1, first_name: 1, numberOfTreatments: { $size: "$treatments" } } }, { $match: { numberOfTreatments: { $gte: 2 } } }, { $project: { professional_id: 1, role_code: 1, first_name: 1 } } ])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $project: { professional_id: 1, role_code: 1, first_name: 1, numberOfTreatments: { $size: "$treatments" } } }, { $match: { numberOfTreatments: { $gte: 2 } } }, { $project: { professional_id: 1, role_code: 1, first_name: 1 } } ])	dog_kennels
+db.Breeds.aggregate([ { $lookup: { from: "Dogs", localField: "breed_code", foreignField: "breed_code", as: "dogs" } }, { $project: { breed_name: 1} }, { $sort: { dogCount: -1 } }, { $limit: 1 }])	dog_kennels
+db.Breeds.aggregate([ { $lookup: { from: "Dogs", localField: "breed_code", foreignField: "breed_code", as: "dogs" } }, { $project: { breed_name: 1 } }, { $sort: { dogCount: -1 } }, { $limit: 1 }])	dog_kennels
+db.Owners.aggregate([ { $lookup: { from: "Dogs", localField: "owner_id", foreignField: "owner_id", as: "dogs" } }, { $unwind: "$dogs" }, { $lookup: { from: "Treatments", localField: "dogs.dog_id", foreignField: "dog_id", as: "treatments" } }, { $unwind: "$treatments" }, { $group: { _id: "$owner_id", last_name: { $first: "$last_name" }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { owner_id: "$_id", last_name: 1 } }])	dog_kennels
+db.Treatment_Types.aggregate([ { $lookup: { from: "Treatments", localField: "treatment_type_code", foreignField: "treatment_type_code", as: "treatments" } }, { $project: { treatment_type_description: 1 } }, { $sort: { totalCost: 1 } }, { $limit: 1 }])	dog_kennels
+db.Treatment_Types.aggregate([ { $lookup: { from: "Treatments", localField: "treatment_type_code", foreignField: "treatment_type_code", as: "treatments" } }, { $project: { treatment_type_description: 1 } }, { $sort: { totalCost: 1 } }, { $limit: 1 }])	dog_kennels
+db.Owners.aggregate([ { $lookup: { from: "Dogs", localField: "owner_id", foreignField: "owner_id", as: "dogs" } }, { $unwind: "$dogs" }, { $lookup: { from: "Treatments", localField: "dogs.dog_id", foreignField: "dog_id", as: "treatments" } }, { $unwind: "$treatments" }, { $group: { _id: "$owner_id", zip_code: { $first: "$zip_code" }, totalCost: { $sum: "$treatments.cost_of_treatment" } } }, { $sort: { totalCost: -1 } }, { $limit: 1 }, { $project: { owner_id: "$_id", zip_code: 1 } }])	dog_kennels
+db.Owners.aggregate([ { $lookup: { from: "Dogs", localField: "owner_id", foreignField: "owner_id", as: "dogs" } }, { $unwind: "$dogs" }, { $lookup: { from: "Treatments", localField: "dogs.dog_id", foreignField: "dog_id", as: "treatments" } }, { $unwind: "$treatments" }, { $group: { _id: "$owner_id", zip_code: { $first: "$zip_code" }, totalCost: { $sum: "$treatments.cost_of_treatment" } } }, { $sort: { totalCost: -1 } }, { $limit: 1 }, { $project: { owner_id: "$_id", zip_code: 1 } }])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $match: { "treatments.1": { $exists: true } } }, { $project: { professional_id: 1, cell_number: 1 } }])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $match: { "treatments.1": { $exists: true } } }, { $project: { professional_id: 1, cell_number: 1 } }])	dog_kennels
+db.Owners.aggregate([ { $lookup: { from: "Dogs", localField: "owner_id", foreignField: "owner_id", as: "dogs" } }, { $unwind: "$dogs" }, { $project: { first_name: 1, last_name: 1, size_code: "$dogs.size_code" } }])	dog_kennels
+db.Owners.aggregate([ { $lookup: { from: "Dogs", localField: "owner_id", foreignField: "owner_id", as: "dogs" } }, { $unwind: "$dogs" }, { $project: { first_name: 1, dog_name: "$dogs.name" } }])	dog_kennels
+db.Owners.aggregate([ { $match: { state: "Virginia" } }, { $lookup: { from: "Dogs", localField: "owner_id", foreignField: "owner_id", as: "dogs" } }, { $unwind: "$dogs" }, { $project: { first_name: 1, "dog_name": "$dogs.name" } } ])	dog_kennels
+db.Professionals.find({ $or: [ { state: 'Hawaii' }, { state: 'Wisconsin' } ]}, { email_address: 1 })	dog_kennels
+db.Professionals.find( { state: { $in: ['Hawaii', 'Wisconsin'] } }, { email_address: 1 })	dog_kennels
+db.Treatments.aggregate([ { $group: { _id: "$dog_id" } }, { $count: "unique_dogs_treated" } ])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $match: { "treatments": { $exists: true, $ne: [] } } }, { $group: { _id: null, count: { $sum: 1 } } }, { $project: { count: 1 } } ])	dog_kennels
+db.Professionals.find( { city: /West/ }, { role_code: 1, street: 1, city: 1, state: 1 } )	dog_kennels
+db.Professionals.find( { city: { $regex: /West/ } }, { role_code: 1, street: 1, city: 1, state: 1 })	dog_kennels
+db.Owners.find({state: {$regex: /North/}}, {first_name: 1, last_name: 1, email_address: 1})	dog_kennels
+db.Owners.find({ state: { $regex: /North/ } }, { first_name: 1, last_name: 1, email_address: 1 })	dog_kennels
+db.Treatments.find({}, { cost_of_treatment: 1 }).sort({ date_of_treatment: -1 }).limit(1)	dog_kennels
+db.Treatments.find({}, {cost_of_treatment: 1}).sort({date_of_treatment: -1}).limit(1)	dog_kennels
+db.Dogs.aggregate([ { $lookup: { from: "Treatments", localField: "dog_id", foreignField: "dog_id", as: "dog_treatments" } }, { $match: { "dog_treatments": { $size: 0 } } }, { $count: "untreated_dogs_count" } ])	dog_kennels
+db.Dogs.aggregate([ { $lookup: { from: "Treatments", localField: "dog_id", foreignField: "dog_id", as: "treatment_info" } }, { $match: { "treatment_info": { $size: 0 } } }, { $count: "number_of_dogs_without_treatment" } ])	dog_kennels
+db.Owners.aggregate([ { $lookup: { from: "Dogs", localField: "owner_id", foreignField: "owner_id", as: "owner_dogs" } }, { $match: { "owner_dogs": { $size: 0 } } }, { $count: "owners_without_dogs" } ])	dog_kennels
+db.Owners.aggregate([ { $lookup: { from: "Dogs", localField: "owner_id", foreignField: "owner_id", as: "dog_owner" } }, { $match: { dog_owner: { $size: 0 } } }, { $count: "number_of_owners_without_dogs" } ])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $match: { treatments: { $size: 0 } } }, { $count: "no_treatment_count" } ])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $match: { treatments: [] } }, { $count: "numberOfProfessionals" } ])	dog_kennels
+db.Dogs.find({}, {age: 1}).sort({age: -1}).limit(1)	dog_kennels
+db.Dogs.aggregate([ { $group: { _id: null, maxAge: { $max: "$age" } } }, { $project: { maxAge: 1 } }])	dog_kennels
+db.Charges.aggregate([ { $project: { charge_type: 1, charge_amount: 1 } }])	dog_kennels
+db.Charges.find({}, { charge_type: 1, charge_amount: 1})	dog_kennels
+db.Charges.aggregate([ { $group: { _id: null, maxChargeAmount: { $max: "$charge_amount" } } }, { $project: { öaxChargeAmount: 1 } }])	dog_kennels
+db.Charges.aggregate([ { $group: { _id: null, maxChargeAmount: { $max: "$charge_amount" } } }, { $project: { öaxChargeAmount: 1 } }])	dog_kennels
+db.Professionals.find({}, {email_address: 1, cell_number: 1, home_phone: 1})	dog_kennels
+db.Professionals.find({}, { email_address: 1, cell_number: 1, home_phone: 1 })	dog_kennels
+db.Dogs.aggregate([ { $lookup: { from: "Breeds", localField: "breed_code", foreignField: "breed_code", as: "breed_info" } }, { $lookup: { from: "Sizes", localField: "size_code", foreignField: "size_code", as: "size_info" } }, { $unwind: "$breed_info" }, { $unwind: "$size_info" }, { $group: { _id: { breed_code: "$breed_code", size_code: "$size_code" } } }, { $project: { breed_code: "$_id.breed_code", size_code: "$_id.size_code" } } ])	dog_kennels
+db.Dogs.aggregate([ { $group: { _id: { breed_code: "$breed_code", size_code: "$size_code" } } }, { $project: { breed_code: "$_id.breed_code", size_code: "$_id.size_code" } } ])	dog_kennels
+db.Professionals.aggregate([ { $lookup: { from: "Treatments", localField: "professional_id", foreignField: "professional_id", as: "treatments" } }, { $unwind: "$treatments" }, { $lookup: { from: "Treatment_Types", localField: "treatments.treatment_type_code", foreignField: "treatment_type_code", as: "treatment_description" } }, { $unwind: "$treatment_description" }, { $group: { _id: { first_name: "$first_name", treatment_type_description: "$treatment_description.treatment_type_description" } } }, { $project: { first_name: "$_id.first_name", treatment_type_description: "$_id.treatment_type_description" } } ])	dog_kennels
+db.singer.find({}, {Name: 1}).sort({Net_Worth_Millions: 1})	singer
+db.singer.find({}, {Name: 1}).sort({Net_Worth_Millions: 1})	singer
+db.singer.find({}, {Birth_Year: 1, Citizenship: 1})	singer
+db.singer.find({}, {Birth_Year: 1, Citizenship: 1})	singer
+db.singer.find({ Citizenship: { $ne: 'France' } }, { Name: 1 })	singer
+db.singer.find({ Citizenship: { $ne: 'France' } }, { Name: 1 })	singer
+db.singer.find({ Birth_Year: { $in: [1948, 1949] } }, { Name: 1 })	singer
+db.singer.find({ Birth_Year: { $in: [1948, 1949] } }, { Name: 1 })	singer
+db.singer.find({}, {Name: 1}).sort({Net_Worth_Millions: -1}).limit(1)	singer
+db.singer.find({}, {Name: 1}).sort({Net_Worth_Millions: -1}).limit(1)	singer
+db.singer.aggregate([ { $group: { _id: "$Citizenship", count: { $sum: 1 } } }, { $project: { Citizenship: "$_id", count: 1 } }])	singer
+db.singer.aggregate([ { $group: { _id: "$Citizenship", count: { $sum: 1 } } }])	singer
+db.singer.aggregate([ { $group: { _id: "$Citizenship", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Citizenship: "$_id"} }])	singer
+db.singer.aggregate([ { $group: { _id: "$Citizenship", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $project: { Citizenship: "$_id"} }])	singer
+db.singer.aggregate([ { $group: { _id: "$Citizenship", max_net_worth: { $max: "$Net_Worth_Millions" } } }, { $project: { Citizenship: "$_id", max_net_worth: 1 } }])	singer
+db.singer.aggregate([ { $group: { _id: "$Citizenship", maxNetWorth: { $max: "$Net_Worth_Millions" } } }])	singer
+db.singer.aggregate([ { $lookup: { from: "song", localField: "Singer_ID", foreignField: "Singer_ID", as: "song_info" } }, { $unwind: "$song_info" }, { $project: { Title: "$song_info.Title", Name: "$Name" } }])	singer
+db.singer.aggregate([ { $lookup: { from: "song", localField: "Singer_ID", foreignField: "Singer_ID", as: "song_info" } }, { $unwind: "$song_info" }, { $project: { Title: "$song_info.Title", Name: "$Name" } }])	singer
+db.singer.aggregate([ { $lookup: { from: "song", localField: "Singer_ID", foreignField: "Singer_ID", as: "song_info" } }, { $unwind: "$song_info" }, { $match: { "song_info.Sales": { $gt: 300000 } } }, { $group: { _id: "$Name" } }, { $project: { Name: "$_id" } } ])	singer
+db.singer.aggregate([ { $lookup: { from: "song", localField: "Singer_ID", foreignField: "Singer_ID", as: "song_info" } }, { $unwind: "$song_info" }, { $match: { "song_info.Sales": { $gt: 300000 } } }, { $group: { _id: "$Name" } } ])	singer
+db.singer.aggregate([ { $lookup: { from: "song", localField: "Singer_ID", foreignField: "Singer_ID", as: "songs" } }, { $match: { "songs.1": { $exists: true } } }, { $project: { Name: 1 } }])	singer
+db.singer.aggregate([ { $lookup: { from: "song", localField: "Singer_ID", foreignField: "Singer_ID", as: "songs" } }, { $match: { "songs.1": { $exists: true } } }, { $project: { Name: 1 } }])	singer
+db.singer.aggregate([ { $lookup: { from: "song", localField: "Singer_ID", foreignField: "Singer_ID", as: "songs" } }, { $unwind: "$songs" }, { $group: { _id: "$Name", totalSales: { $sum: "$songs.Sales" } } }, { $project: { Name: "$_id", totalSales: 1 } } ])	singer
+db.singer.aggregate([ { $lookup: { from: "song", localField: "Singer_ID", foreignField: "Singer_ID", as: "songs" } }, { $unwind: "$songs" }, { $group: { _id: "$Name", totalSales: { $sum: "$songs.Sales" } } }, { $project: { Name: "$_id", totalSales: 1 } } ])	singer
+db.singer.aggregate([ { $lookup: { from: "song", localField: "Singer_ID", foreignField: "Singer_ID", as: "songs" } }, { $match: { songs: { $size: 0 } } }, { $project: { Name: 1 } } ])	singer
+db.singer.find( { Singer_ID: { $nin: db.song.distinct("Singer_ID") } }, { Name: 1 })	singer
+db.Properties.aggregate([ { $lookup: { from: "Ref_Property_Types", localField: "property_type_code", foreignField: "property_type_code", as: "property_type_info" } }, { $unwind: "$property_type_info" }, { $group: { _id: "$property_type_info.property_type_description" } }, { $project: { property_type_description: "$_id" } } ])	real_estate_properties
+db.Properties.find( { $or: [ { property_type_code: 'House' }, { property_type_code: 'Apartment', room_count: { $gt: 1 } } ] }, { property_name: 1 })	real_estate_properties
