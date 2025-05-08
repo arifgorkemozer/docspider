@@ -9,3 +9,4 @@ experiments/*
 .DS_Store
 *.pyc
 spider_table_column_metadata.json
+comparison_results*.txt
