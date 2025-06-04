@@ -2,6 +2,8 @@
 
 #### Arif Görkem Özer, Fırat Çekinel, Pınar Karagöz, İsmail Hakkı Toroslu
 
+You can access the paper published in Natural Language Processing journal, from [this link](https://doi.org/10.1017/nlp.2024.63).
+
 ## Overview
 
 This repository contains a dataset, called DocSpider, for the task of converting natural language (English) to MongoDB querying language (MQL).
