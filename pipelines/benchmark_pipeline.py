@@ -25,7 +25,6 @@ ROOT_PATH = ".." # parent directory
 DOCSPIDER_DATASET_PATH = f"{ROOT_PATH}/docspider_ground_truth_dataset"
 COLLECTIONS_JSON_PATH = f"{DOCSPIDER_DATASET_PATH}/collections.json"
 DEV_DATASET_JSON_PATH = f"{DOCSPIDER_DATASET_PATH}/dev.json"
-DEV_HARDNESS_PATH = f"{DOCSPIDER_DATASET_PATH}/hardness_dev.csv"
 DEV_GOLD_MONGODB_QUERY_FILENAME = "dev_gold.tsv"
 DEV_GOLD_MONGODB_QUERY_PATH = f"{DOCSPIDER_DATASET_PATH}/{DEV_GOLD_MONGODB_QUERY_FILENAME}"
 ALL_EXPERIMENTS_ROOT_PATH = f"{ROOT_PATH}/experiments"
@@ -44,10 +43,12 @@ ACHIEVED_QUERY_RESULTS_PATH = f"{EXPERIMENT_PATH}/{ACHIEVED_QUERY_RESULTS_FOLDER
 
 # read query hardness
 hardness_map = {}
-hardness_file = pandas.read_csv(DEV_HARDNESS_PATH, sep=SEMICOLON_CHAR)
 
-for i, row in hardness_file.iterrows():
-    hardness_map[int(row["query_id"])] = row["hardness"]
+dev_json_file = open(DEV_DATASET_JSON_PATH, "r")
+dev_json = json.load(dev_json_file)
+
+for i, dev_json_entry in enumerate(dev_json):
+    hardness_map[dev_json_entry["question_id"]] = dev_json_entry["difficulty"]
 
 ######################### BEGIN - CREATE FILES AND FOLDERS NEEDED #########################
 items_under_main_folder = os.listdir(ROOT_PATH)

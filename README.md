@@ -28,8 +28,6 @@ You should see a directory named *docspider_ground_truth_dataset* that contains:
 - collections.json (DocSpider dataset collections in JSON format)
 - train_gold.tsv (DocSpider train dataset gold MongoDB queries)
 - dev_gold.tsv (DocSpider test dataset gold MongoDB queries)
-- hardness_train.csv (Query hardness values from Spider train dataset)
-- hardness_dev.csv (Query hardness values from Spider test dataset)
 - docspider_ground_truth_train.csv (DocSpider train dataset in CSV format)
 - docspider_ground_truth_dev.csv (DocSpider test dataset in CSV format)
 
